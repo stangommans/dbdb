@@ -34,8 +34,19 @@ export default function AddBarSheet({
   const [manualLng, setManualLng] = useState('');
   const [manualLoading, setManualLoading] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
+  const [apiKey, setApiKey] = useState('');
 
-  const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '';
+  // Fetch the active Google Maps API key at runtime
+  useEffect(() => {
+    fetch('/api/config')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.googleMapsApiKey) {
+          setApiKey(data.googleMapsApiKey);
+        }
+      })
+      .catch((err) => console.error('Failed to load Google Maps config at runtime:', err));
+  }, []);
 
   // Synchronize manual coordinates when a user drops a custom pin on the Leaflet map
   useEffect(() => {
