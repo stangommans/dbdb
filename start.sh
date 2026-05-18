@@ -14,6 +14,10 @@ fi
 # Apply correct file permissions for SQLite read/writes
 chmod 666 /data/dev.db
 
+# Run pending database migrations on persistent mount
+echo "Executing pending database schema migrations..."
+npx prisma migrate deploy --schema=./prisma/schema.prisma
+
 # Dynamic monolithic symlink mapping: links public/uploads directly to persistent host volume uploads
 echo "Configuring persistent uploads directory symbolic links..."
 rm -rf /app/public/uploads
