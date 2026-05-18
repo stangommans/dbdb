@@ -1,0 +1,43 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Bar {
+  id            String   @id @default(uuid())
+  name          String
+  address       String
+  latitude      Float
+  longitude     Float
+  googlePlaceId String?  @unique // Optional to prevent importing duplicate bars from Google Maps
+  amenities     String?  // Comma-separated list of tags (e.g. "POOL_TABLE,CASH_ONLY")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  reviews       Review[]
+}
+
+model Review {
+  id            String   @id @default(uuid())
+  barId         String
+  bar           Bar      @relation(fields: [barId], references: [id], onDelete: Cascade)
+  
+  // Mandatory Rating
+  diveScore     Int      // 1 to 5 scale
+  
+  // Optional Detailed Ratings
+  pricePerMl    Float?   // Absolute price rating
+  relativePrice Float?   // 1 to 5 regional price rating
+  murkiness     String?  // "MURKY" | "AVERAGE" | "ACTUALLY_NICE"
+  comment       String?  // Optional text review
+  photoUrl      String?  // Path to local public upload
+  
+  // Cryptographic signature matching user's cookie to prevent double votes and allow editing
+  reviewerToken String   
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}

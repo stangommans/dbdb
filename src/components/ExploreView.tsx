@@ -1,0 +1,204 @@
+"use client";
+
+interface Review {
+  id: string;
+  diveScore: number;
+  pricePerMl: number | null;
+  relativePrice: number | null;
+  murkiness: string | null;
+  comment: string | null;
+  photoUrl: string | null;
+  reviewerToken: string;
+  createdAt: string;
+}
+
+interface Bar {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  googlePlaceId: string | null;
+  amenities: string | null;
+  reviewCount: number;
+  averageDiveScore: number;
+  averagePricePerMl: number | null;
+  averageRelativePrice: number | null;
+  murkinessStats: {
+    MURKY: number;
+    AVERAGE: number;
+    ACTUALLY_NICE: number;
+  };
+  reviews: Review[];
+}
+
+interface ExploreViewProps {
+  bars: Bar[];
+  onBarSelect: (id: string) => void;
+  selectedBarId: string | null;
+}
+
+const ATMOSPHERIC_IMGS = [
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuD378c1qOwaOCqHrgMdtmtPvU8HybnSCuAN8elj0I7a5wwQi1_dmRf_ypPQxG-ynoqr08qgyYraqvUVWQhiusqxX78lZh-fMscmMk1kLv5_80m9NPtZEijHzrWw87mlNZbDO_zCqZhgJIg7ga3sDbkc-ghChAzFQoib3hpkCPJ-eIY_sL7_RWpRICsBtgI9MshRcEjytAqSQktdAh6spKBwjXkxA7-AHUBvy2QZE_yBAQNPrurW_x1IzY5gRIVh_F8s1RQKvudRt9o",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDdNrbU9J_uexIYmoF0sRAd54U6-sS_zh2Y7ghsoO5GJT6swwJVv1Ij8m_DCOwc56GVAy_I1xbcErNC8A6bxy58oF15890f73vcPWavFud_SUAPs4TdASh40tJCMFHgIIEWoBVqdknLsH13pRAT0REQafEiT1ktcDH8EqC-rl66chi3YRjrmBwy1_xvV4NrnMITFbD-Jl8dEgEpPXBLuut4lygqmu0p0YgHyv_aA513gb1-fLwLJMZ2d0Hv6hC78wKNNFXFT9eiSms",
+  "https://lh3.googleusercontent.com/aida-public/AB6AXuDOVAFzTqyK4-rsaDKhMvBe6ISB153-FNyZeoVFxKP316T4gSz_D4Mr4_CBUek87w6mDRTwEGteAg3r9BUNiwhjNzKu7kDs5l45rbtH5S3JaM5DmBiBlDQNVDjxBBDBsHhtjgQqJolZkh-CsDnmlG9fRuZuIZuXdRO58nJ9it6Ga3GvkAGOOTKBhDdiaITc_Sk_Asf5Pn_9wCdK5h1qzwGnAoHDK709Sl3oE1BJ69kbq75QJHwqDKUphk29_naSTxwxJvsJA_k4gc8"
+];
+
+// Clean label mapping for amenities tags
+const TAG_LABELS: Record<string, string> = {
+  CASH_ONLY: "Cash Only",
+  POOL_TABLE: "Pool Table",
+  LIVE_MUSIC: "Live Music",
+  CRAFT_BEER: "Craft Beer",
+  SMOKING_AREA: "Smoker Room",
+  JUKEBOX: "Jukebox",
+  DARTBOARD: "Dartboard"
+};
+
+export default function ExploreView({ bars, onBarSelect, selectedBarId }: ExploreViewProps) {
+  // Deterministic fallback image selection based on bar ID characters
+  const getAtmosphericImg = (id: string, index: number) => {
+    const charCodeSum = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return ATMOSPHERIC_IMGS[(charCodeSum + index) % ATMOSPHERIC_IMGS.length];
+  };
+
+  return (
+    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+      {/* Intro section */}
+      <div className="mb-8">
+        <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
+          Discover the Underground
+        </h2>
+        <p className="text-on-surface-variant text-sm mt-1 max-w-2xl font-light">
+          A handpicked bento collection of shadowy corners, neon highlights, and vintage pours. Sorted for the true urban explorer.
+        </p>
+      </div>
+
+      {bars.length === 0 ? (
+        <div className="flex flex-col items-center justify-center text-center p-12 border border-white/5 bg-surface-container-low rounded-2xl space-y-4">
+          <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 animate-pulse">
+            explore_off
+          </span>
+          <div>
+            <h4 className="font-display font-bold text-white">No dive bars match filters</h4>
+            <p className="text-xs text-on-surface-variant max-w-xs mt-1">
+              Try adjusting your sliders or tags to search wider neighborhoods and deeper vibes.
+            </p>
+          </div>
+        </div>
+      ) : (
+        /* Bento Responsive Grid */
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {bars.map((bar, barIdx) => {
+            const hasReviews = bar.reviewCount > 0;
+            
+            // Check if any review has an uploaded photo
+            const uploadedPhoto = bar.reviews.find((r) => r.photoUrl)?.photoUrl;
+            const heroImage = uploadedPhoto || getAtmosphericImg(bar.id, barIdx);
+
+            // Dominant murkiness calculate
+            let murkLabel = "";
+            let murkColor = "";
+            if (hasReviews) {
+              const stats = bar.murkinessStats;
+              if (stats.MURKY >= stats.AVERAGE && stats.MURKY >= stats.ACTUALLY_NICE) {
+                murkLabel = "🟢 Murky";
+                murkColor = "bg-[#84cc16]/10 text-[#84cc16] border-[#84cc16]/20";
+              } else if (stats.AVERAGE >= stats.MURKY && stats.AVERAGE >= stats.ACTUALLY_NICE) {
+                murkLabel = "🟡 Average";
+                murkColor = "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20";
+              } else {
+                murkLabel = "🔵 Actually Nice";
+                murkColor = "bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20";
+              }
+            }
+
+            // Price indicators
+            const priceTag = bar.averageRelativePrice 
+              ? "$".repeat(Math.round(bar.averageRelativePrice)) 
+              : null;
+
+            // Render top 2 amenities tags
+            const amenitiesList = bar.amenities 
+              ? bar.amenities.split(",").filter((tag) => TAG_LABELS[tag]) 
+              : [];
+
+            return (
+              <div
+                key={bar.id}
+                onClick={() => onBarSelect(bar.id)}
+                className={`glass-panel rounded-2xl overflow-hidden group cursor-pointer hover:border-primary-container/30 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-black/50 select-none
+                  ${selectedBarId === bar.id ? "border-primary-container ring-1 ring-primary-container/20" : ""}`}
+              >
+                {/* Visual Header */}
+                <div className="h-44 w-full relative overflow-hidden bg-surface-container-lowest">
+                  <img
+                    src={heroImage}
+                    alt={bar.name}
+                    className="w-full h-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                  />
+                  {/* Rating Badge */}
+                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-xs font-bold font-display border border-white/10 flex items-center gap-1">
+                    <span className="text-primary text-sm">★</span>
+                    <span className="text-white">
+                      {bar.averageDiveScore ? bar.averageDiveScore.toFixed(1) : "0.0"}
+                    </span>
+                  </div>
+
+                  {/* Absolute Price per ml index (if reviews present) */}
+                  {bar.averagePricePerMl !== null && (
+                    <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-primary font-display border border-white/5 uppercase tracking-wider">
+                      €{(bar.averagePricePerMl * 100).toFixed(1)}c / ML
+                    </div>
+                  )}
+                </div>
+
+                {/* Details Body */}
+                <div className="p-5 space-y-3.5">
+                  <div>
+                    <h3 className="font-display text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-1">
+                      {bar.name}
+                    </h3>
+                    <p className="text-xs text-on-surface-variant font-light line-clamp-1 mt-0.5">
+                      {bar.address}
+                    </p>
+                  </div>
+
+                  {/* Badges container */}
+                  <div className="flex flex-wrap gap-2 items-center">
+                    {priceTag && (
+                      <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-primary font-bold uppercase tracking-wider">
+                        {priceTag}
+                      </span>
+                    )}
+                    {murkLabel && (
+                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase border tracking-wider ${murkColor}`}>
+                        {murkLabel}
+                      </span>
+                    )}
+                    {amenitiesList.slice(0, 2).map((tag) => (
+                      <span
+                        key={tag}
+                        className="px-2.5 py-0.5 bg-surface-container-high border border-white/5 text-on-surface-variant rounded text-[10px] font-bold uppercase tracking-wider"
+                      >
+                        {TAG_LABELS[tag]}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Footer details */}
+                  <div className="pt-3.5 border-t border-white/5 flex justify-between items-center text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
+                    <span>{bar.reviewCount} Review{bar.reviewCount === 1 ? "" : "s"}</span>
+                    <span className="text-primary group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
+                      EXPLORE <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}

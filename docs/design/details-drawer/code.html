@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>DBDB | The Rusty Anchor</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700;800&amp;family=Inter:wght@400;500;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "tertiary-fixed": "#ffdad7",
+                        "surface-container-low": "#1c1b1b",
+                        "surface-container-highest": "#353534",
+                        "secondary": "#94de2d",
+                        "on-tertiary-fixed-variant": "#930013",
+                        "surface-container": "#201f1f",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#613b00",
+                        "tertiary": "#ffbcb7",
+                        "primary-fixed": "#ffddb8",
+                        "on-surface-variant": "#d8c3ad",
+                        "secondary-fixed": "#acf847",
+                        "on-secondary-fixed-variant": "#304f00",
+                        "on-primary-fixed": "#2a1700",
+                        "surface-dim": "#131313",
+                        "on-error-container": "#ffdad6",
+                        "surface-container-lowest": "#0e0e0e",
+                        "outline": "#a08e7a",
+                        "on-secondary-container": "#2c4900",
+                        "surface-container-high": "#2a2a2a",
+                        "surface-tint": "#ffb95f",
+                        "surface": "#131313",
+                        "on-primary": "#472a00",
+                        "on-secondary": "#1f3700",
+                        "on-error": "#690005",
+                        "tertiary-container": "#ff938c",
+                        "on-background": "#e5e2e1",
+                        "inverse-primary": "#855300",
+                        "tertiary-fixed-dim": "#ffb3ad",
+                        "on-secondary-fixed": "#102000",
+                        "primary-fixed-dim": "#ffb95f",
+                        "on-surface": "#e5e2e1",
+                        "on-primary-fixed-variant": "#653e00",
+                        "primary": "#ffc174",
+                        "surface-bright": "#3a3939",
+                        "background": "#131313",
+                        "inverse-on-surface": "#313030",
+                        "secondary-fixed-dim": "#91db2a",
+                        "secondary-container": "#7ac100",
+                        "on-tertiary-container": "#8d0012",
+                        "error": "#ffb4ab",
+                        "on-tertiary-fixed": "#410004",
+                        "surface-variant": "#353534",
+                        "on-tertiary": "#68000a",
+                        "inverse-surface": "#e5e2e1",
+                        "primary-container": "#f59e0b",
+                        "outline-variant": "#534434"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "gutter": "16px",
+                        "unit": "8px",
+                        "container-max": "1280px",
+                        "margin-desktop": "40px",
+                        "margin-mobile": "20px"
+                    },
+                    "fontFamily": {
+                        "headline-lg": ["Outfit"],
+                        "headline-lg-mobile": ["Outfit"],
+                        "headline-sm": ["Outfit"],
+                        "headline-md": ["Outfit"],
+                        "body-lg": ["Inter"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg": ["48px", { "lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "headline-lg-mobile": ["32px", { "lineHeight": "1.1", "fontWeight": "700" }],
+                        "headline-sm": ["24px", { "lineHeight": "1.3", "fontWeight": "600" }],
+                        "headline-md": ["32px", { "lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600" }],
+                        "body-lg": ["18px", { "lineHeight": "1.6", "fontWeight": "400" }],
+                        "body-md": ["16px", { "lineHeight": "1.5", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700" }]
+                    }
+                },
+            },
+        }
+    </script>
+<style>body {
+    background-color: #0a0a0a;
+    color: #e5e2e1;
+    overflow: hidden
+    }
+.glass-panel {
+    background: rgba(23, 23, 23, 0.8);
+    backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08)
+    }
+.neon-amber {
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.4)
+    }
+.amber-bloom {
+    filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.6))
+    }
+.map-bg {
+    background-image: url(https://lh3.googleusercontent.com/aida-public/AB6AXuDiQq4ur7g6LZykO98QiNXVohM34vTsffNscQiaj6Mozls_ZBzxFzFhFoQh5hdI8T1w9rEH55_OVQX1jnNXVfoPhem5aQHtEDnAo2O8emqCveIrDypIrXJVIhIakSIW1UXMDpwY_UNvDUXaKky58WCewA3zOWwixJ96J7qDuLEXFmqsab7ghCskD0MFMBkSPdYf-OSmW0gw0wU3K6rlh7WhvYZSCcahRl8gjPwNn1jj7Dp4wtjt64pQOq1COTo4szEx5YFrKtWpbUA);
+    background-size: cover;
+    background-position: center
+    }
+#bottom-sheet {
+    transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1);
+    transform: translatey(60%)
+    }
+#bottom-sheet.expanded {
+    transform: translatey(0)
+    }
+.pull-bar {
+    width: 40px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 2px
+    }
+.custom-scrollbar::-webkit-scrollbar {
+    width: 4px
+    }
+.custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent
+    }
+.custom-scrollbar::-webkit-scrollbar-thumb {
+    background: rgba(245, 158, 11, 0.2);
+    border-radius: 10px
+    }</style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="h-screen w-full flex flex-col font-body-md text-body-md">
+<!-- Top App Bar -->
+<header class="fixed top-0 w-full z-50 bg-surface-container/80 backdrop-blur-xl border-b border-white/10 shadow-[0_0_15px_rgba(245,158,11,0.1)] flex items-center justify-between px-margin-mobile h-16">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform hover:bg-white/5 p-2 rounded-full">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold text-primary tracking-tighter">DBDB</span>
+</div>
+<button class="active:scale-95 transition-transform hover:bg-white/5 p-2 rounded-full">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</header>
+<!-- Main Map Background Area -->
+<main class="flex-1 map-bg relative">
+<!-- Mock Map Markers -->
+<div class="absolute top-1/3 left-1/4 w-4 h-4 bg-primary rounded-full amber-bloom animate-pulse"></div>
+<div class="absolute top-1/2 right-1/3 w-3 h-3 bg-on-surface-variant/40 rounded-full"></div>
+<div class="absolute bottom-1/4 left-1/2 w-3 h-3 bg-on-surface-variant/40 rounded-full"></div>
+</main>
+<!-- Bottom Sheet (Details) -->
+<div class="fixed bottom-0 left-0 right-0 z-40 glass-panel rounded-t-[32px] h-[751px] flex flex-col shadow-[0_-10px_40px_rgba(0,0,0,0.8)]" id="bottom-sheet">
+<!-- Handle for dragging -->
+<div class="w-full h-8 flex items-center justify-center cursor-grab active:cursor-grabbing" id="sheet-handle">
+<div class="pull-bar"></div>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar">
+<!-- Hero Image Section -->
+<div class="px-margin-mobile mb-6 relative">
+<div class="aspect-[16/10] w-full rounded-xl overflow-hidden border border-white/5">
+<img alt="The Rusty Anchor" class="w-full h-full object-cover grayscale-[0.2] contrast-[1.1]" data-alt="An atmospheric and moody dive bar interior at midnight. The space is filled with dark wooden textures, a long brass-top bar reflecting flickering orange neon signs, and vintage leather stools. Warm, low-key lighting creates a smoky ambiance with soft amber glows highlighting dust motes and glassware. The overall aesthetic is gritty yet premium, using deep blacks and vibrant orange accents to convey an authentic nightlife experience." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBZuKYMBKwrJWm75rJDSZwgGO71I_0NIeabz1EsjLd4gR5ZYkEf7vRoEwrhala5VPNaSVISzz7frL2itUCYHUsZajxMnFN9BLrEEV7eYpMeBffjpgWqkuYcnQhSjxtYCm7JpA-jlkl4cF-R3o20jGs21JPrQ9RM16mt841D3e6uHT8nPXEaNB6PfxIwz7CX3ViJ12n_c11HX4TK5t086DK9leB7D87EiCzAFQXQqtLdCuqZM_bbZSXWCEFuP_3JRRES3IlMXIjupJE"/>
+</div>
+<div class="absolute top-4 right-8">
+<span class="bg-surface-container-lowest/80 backdrop-blur-md border border-[#84cc16]/30 text-[#84cc16] px-3 py-1 rounded-full font-label-caps text-label-caps flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]" style="font-variation-settings: 'FILL' 1;">verified</span>
+                        ACTUALLY NICE
+                    </span>
+</div>
+</div>
+<!-- Content Details -->
+<div class="px-margin-mobile pb-32">
+<div class="flex justify-between items-start mb-2">
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface font-extrabold tracking-tight">The Rusty Anchor</h1>
+<div class="flex items-center gap-1 text-[#f59e0b] amber-bloom">
+<span class="material-symbols-outlined text-[20px]" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="font-bold font-headline-sm text-headline-sm">4.9</span>
+</div>
+</div>
+<div class="flex items-center gap-3 mb-6">
+<span class="text-[#ef4444] font-bold tracking-widest text-label-caps">$$$$</span>
+<span class="w-1 h-1 bg-white/20 rounded-full"></span>
+<span class="text-on-surface-variant font-label-caps text-label-caps">DIVE • LIVE MUSIC • CASH ONLY</span>
+</div>
+<!-- Action Buttons -->
+<div class="grid grid-cols-3 gap-3 mb-8">
+<button class="flex flex-col items-center justify-center gap-2 py-4 bg-primary text-on-primary rounded-xl neon-amber active:scale-95 transition-all">
+<span class="material-symbols-outlined">directions</span>
+<span class="text-label-caps font-bold">MAPS</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 py-4 border border-primary/40 text-primary rounded-xl hover:bg-primary/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined">call</span>
+<span class="text-label-caps font-bold">CALL</span>
+</button>
+<button class="flex flex-col items-center justify-center gap-2 py-4 border border-primary/40 text-primary rounded-xl hover:bg-primary/5 active:scale-95 transition-all">
+<span class="material-symbols-outlined">bookmark</span>
+<span class="text-label-caps font-bold">SAVE</span>
+</button>
+</div>
+<!-- Description -->
+<section class="mb-8">
+<h3 class="text-label-caps text-on-surface-variant mb-3 font-bold">ATMOSPHERE</h3>
+<p class="font-body-md text-on-surface leading-relaxed opacity-80">
+                        A legendary hole-in-the-wall with a salt-crusted soul. No windows, no pretension—just heavy pours, 1970s vinyl, and the best fish tacos in the harbor. Come for the cheap beer, stay for the stories you'll never tell.
+                    </p>
+</section>
+<!-- Reviews Section -->
+<section class="mb-8">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-label-caps text-on-surface-variant font-bold">RECENT DIVES</h3>
+<span class="text-primary text-label-caps font-bold">SEE ALL (42)</span>
+</div>
+<div class="space-y-4">
+<div class="p-4 bg-white/5 rounded-xl border border-white/5">
+<div class="flex items-center gap-3 mb-2">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest overflow-hidden">
+<img alt="Reviewer" data-alt="Close up portrait of a stylish urban explorer in a dimly lit setting. Cinematic lighting with subtle orange highlights on skin." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDQXVYWR1PO8g4ppo3-Z3aU-2Vmq4g9HC4_KSI8Hx54U4EChhGZmSfEHJ9ClKU6ilGeY_aDFDrd_GGI6RAURA5tBL7CAh-kft_w3vON435f9Q_1eacm6oWBRLMWfpca5vEZC2VbNP7EPUK6n5RPbpcJZEo0Qx6mwSJpKwOlpd-4G9qY-vz-8GJUpNv93WttRZ7-_3VVOckzzqdmuLweC7HjX0ZrsPq_BRs31KdXBn0R5zbR0vKqAttXJ-PPH1gDg9AMMpvnEC8ebt0"/>
+</div>
+<div>
+<p class="text-label-caps font-bold">JAX_DIVE</p>
+<div class="flex text-[#f59e0b] scale-75 -ml-4">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+</div>
+<p class="font-body-md text-on-surface/90 italic">"The smell of old wood and the dim orange glow—it’s perfect. Don't ask for a cocktail menu. Order a draft and listen to the jukebox."</p>
+</div>
+</div>
+</section>
+</div>
+</div>
+</div>
+<!-- Navigation Bar -->
+<nav class="fixed bottom-0 w-full z-50 bg-surface-container-lowest/80 backdrop-blur-2xl border-t border-white/5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] flex justify-around items-center h-20 pb-safe px-4">
+<button class="flex flex-col items-center justify-center text-primary drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">map</span>
+<span class="font-label-caps text-label-caps mt-1">MAP</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-caps text-label-caps mt-1">DISCOVER</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-caps text-label-caps mt-1">SAVED</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-label-caps mt-1">PROFILE</span>
+</button>
+</nav>
+<script>
+        const sheet = document.getElementById('bottom-sheet');
+        const handle = document.getElementById('sheet-handle');
+        let isExpanded = false;
+
+        handle.addEventListener('click', () => {
+            isExpanded = !isExpanded;
+            if (isExpanded) {
+                sheet.classList.add('expanded');
+            } else {
+                sheet.classList.remove('expanded');
+            }
+        });
+
+        // Simple touch/drag simulation for interaction
+        let startY = 0;
+        handle.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        });
+
+        handle.addEventListener('touchend', (e) => {
+            const endY = e.changedTouches[0].clientY;
+            if (startY - endY > 50) {
+                sheet.classList.add('expanded');
+                isExpanded = true;
+            } else if (endY - startY > 50) {
+                sheet.classList.remove('expanded');
+                isExpanded = false;
+            }
+        });
+    </script>
+</body></html>

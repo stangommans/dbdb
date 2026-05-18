@@ -1,0 +1,289 @@
+@import "tailwindcss";
+
+@theme {
+  --color-background: #131313;
+  --color-surface: #131313;
+  --color-surface-dim: #131313;
+  --color-surface-bright: #3a3939;
+  --color-surface-container-lowest: #0e0e0e;
+  --color-surface-container-low: #1c1b1b;
+  --color-surface-container: #201f1f;
+  --color-surface-container-high: #2a2a2a;
+  --color-surface-container-highest: #353534;
+  --color-on-surface: #e5e2e1;
+  --color-on-surface-variant: #d8c3ad;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-on-surface: #313030;
+  --color-outline: #a08e7a;
+  --color-outline-variant: #534434;
+
+  --color-primary: #ffc174;
+  --color-on-primary: #472a00;
+  --color-primary-container: #f59e0b;
+  --color-on-primary-container: #613b00;
+
+  --color-secondary: #84cc16; /* Success: Murky Olive actually nice */
+  --color-rust: #ef4444; /* High Price alert */
+
+  --font-sans: var(--font-inter), system-ui, -apple-system, sans-serif;
+  --font-display: var(--font-outfit), system-ui, -apple-system, sans-serif;
+
+  /* Custom spacing/margins from specs */
+  --spacing-margin-desktop: 40px;
+  --spacing-margin-mobile: 20px;
+  --spacing-container-max: 1280px;
+
+  --beer-amber: #f59e0b;
+  --beer-amber-glow: rgba(245, 158, 11, 0.45);
+}
+
+body {
+  background-color: #131313;
+  color: #e5e2e1;
+  font-family: var(--font-sans);
+  overflow: hidden; /* Avoid mobile viewport bouncing */
+}
+
+/* Glassmorphism & Glooming elements */
+.glass-panel {
+  background: rgba(28, 27, 27, 0.85);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.neon-glow {
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+.amber-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8)); }
+  50% { opacity: 0.7; transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(245, 158, 11, 1)); }
+}
+
+/* Custom Neon Pin styling for Leaflet */
+.custom-neon-pin {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  border: none;
+  background: transparent;
+}
+
+.neon-pin-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 24px;
+  height: 24px;
+  background: transparent;
+}
+
+.neon-pin-core {
+  display: block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--beer-amber);
+  border: 1.5px solid #ffffff;
+  transition: all 0.25s ease-out;
+}
+
+/* Neon glow ranges based on ratings */
+.neon-glow-high {
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.2),
+              0 0 10px var(--beer-amber),
+              0 0 20px var(--beer-amber),
+              0 0 35px var(--beer-amber-glow);
+  transform: scale(1.2);
+}
+
+.neon-glow-med {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1),
+              0 0 8px var(--beer-amber),
+              0 0 15px var(--beer-amber-glow);
+  transform: scale(1);
+}
+
+.neon-glow-low {
+  box-shadow: 0 0 4px var(--beer-amber-glow);
+  transform: scale(0.85);
+  filter: brightness(0.85);
+}
+
+/* Pulsating manual custom pin animation */
+@keyframes neon-pulsate {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.35);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.pulsate {
+  animation: neon-pulsate 1.5s infinite ease-in-out;
+}
+
+/* Leaflet dark theme popups overlay overrides */
+.custom-leaflet-popup .leaflet-popup-content-wrapper {
+  background: rgba(10, 10, 10, 0.82) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5) !important;
+  color: #f5f5f7 !important;
+  padding: 0 !important;
+  overflow: hidden;
+}
+
+.custom-leaflet-popup .leaflet-popup-content {
+  margin: 0 !important;
+  padding: 12px 16px !important;
+  min-width: 180px;
+}
+
+.custom-leaflet-popup .leaflet-popup-tip {
+  background: rgba(10, 10, 10, 0.82) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+.map-popup-card {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.popup-title {
+  margin: 0 !important;
+  font-family: inherit;
+  font-size: 15px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.01em;
+  color: #ffffff !important;
+}
+
+.popup-address {
+  margin: 0 !important;
+  font-size: 12px !important;
+  font-weight: 300;
+  color: #a3a3a3 !important;
+  line-height: 1.3;
+}
+
+.popup-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 6px;
+  font-size: 12px !important;
+}
+
+.popup-rating {
+  font-weight: 600 !important;
+  color: var(--beer-amber) !important;
+}
+
+.popup-reviews {
+  color: #a3a3a3 !important;
+}
+
+/* Glassmorphism drawer panel scrollbar specs */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+/* Google Places Autocomplete premium dark glassmorphism styling */
+.pac-container {
+  background-color: rgba(23, 23, 23, 0.95) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  border: 1px solid rgba(63, 63, 70, 0.6) !important;
+  border-radius: 12px !important;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.7), 0 10px 10px -5px rgba(0, 0, 0, 0.7) !important;
+  margin-top: 6px !important;
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif !important;
+  z-index: 99999 !important;
+  padding: 6px 0 !important;
+}
+
+/* Individual list rows */
+.pac-item {
+  color: #d4d4d4 !important;
+  padding: 10px 16px !important;
+  border-top: 1px solid rgba(63, 63, 70, 0.3) !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center !important;
+  font-size: 13px !important;
+  transition: all 120ms ease-in-out !important;
+}
+
+/* First item does not need a top border */
+.pac-container .pac-item:first-child {
+  border-top: none !important;
+}
+
+/* Hover and selection states */
+.pac-item:hover,
+.pac-item.pac-selected {
+  background-color: rgba(245, 158, 11, 0.08) !important;
+  color: #fbbf24 !important;
+}
+
+/* Search pin/marker icon - color-filtered to a custom glowing amber */
+.pac-icon {
+  margin-top: 0 !important;
+  margin-right: 12px !important;
+  filter: invert(1) sepia(100%) saturate(1200%) hue-rotate(335deg) brightness(95%) contrast(105%) !important;
+}
+
+/* Primary matched text segment (Bar name) */
+.pac-item-query {
+  color: #ffffff !important;
+  font-size: 14px !important;
+  font-weight: 600 !important;
+  padding-right: 4px !important;
+}
+
+/* Unmatched text segment (Address metadata) */
+.pac-matched {
+  color: #fbbf24 !important; /* Highlights matching query chars in amber */
+  font-weight: 700 !important;
+}
+
+/* Google branding footer hiding override */
+.pac-logo:after {
+  display: none !important;
+  content: none !important;
+  height: 0 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+}

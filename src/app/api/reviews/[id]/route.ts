@@ -1,0 +1,94 @@
+import { NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { getOrCreateReviewerToken } from '@/lib/session';
+
+export async function PUT(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Resolve dynamic params safely in Next.js 15+ async router
+    const { id } = await context.params;
+    
+    const body = await request.json();
+    const { diveScore, pricePerMl, relativePrice, murkiness, comment, photoUrl } = body;
+
+    if (!diveScore) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const scoreNum = parseInt(diveScore);
+    if (isNaN(scoreNum) || scoreNum < 1 || scoreNum > 5) {
+      return NextResponse.json({ error: 'diveScore must be an integer between 1 and 5' }, { status: 400 });
+    }
+
+    // Get verified reviewer token UUID from cookie
+    const { uuid: reviewerUuid } = await getOrCreateReviewerToken();
+
+    // Find review
+    const review = await db.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    // Verify ownership
+    if (review.reviewerToken !== reviewerUuid) {
+      return NextResponse.json({ error: 'Unauthorized. You do not own this review.' }, { status: 403 });
+    }
+
+    // Update review
+    const updatedReview = await db.review.update({
+      where: { id },
+      data: {
+        diveScore: scoreNum,
+        pricePerMl: pricePerMl ? parseFloat(pricePerMl) : null,
+        relativePrice: relativePrice ? parseInt(relativePrice) : null,
+        murkiness: murkiness || null,
+        comment: comment || null,
+        photoUrl: photoUrl || null,
+      },
+    });
+
+    return NextResponse.json(updatedReview);
+  } catch (error) {
+    console.error('Error updating review:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  request: Request,
+  context: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await context.params;
+    
+    // Validate administrative override credentials
+    const passcode = request.headers.get('x-admin-passcode');
+    const configuredPasscode = process.env.ADMIN_PASSCODE || 'dbdb-admin';
+    
+    if (!passcode || passcode !== configuredPasscode) {
+      return NextResponse.json({ error: 'Unauthorized. Invalid admin passcode.' }, { status: 401 });
+    }
+
+    const review = await db.review.findUnique({
+      where: { id },
+    });
+
+    if (!review) {
+      return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    await db.review.delete({
+      where: { id },
+    });
+
+    return NextResponse.json({ success: true, message: 'Review successfully purged.' });
+  } catch (error) {
+    console.error('Error deleting review:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}

@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>DBDB | Filter Your Dive</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&amp;family=Inter:wght@400;700&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                "tertiary-fixed": "#ffdad7",
+                "surface-container-low": "#1c1b1b",
+                "surface-container-highest": "#353534",
+                "secondary": "#94de2d",
+                "on-tertiary-fixed-variant": "#930013",
+                "surface-container": "#201f1f",
+                "error-container": "#93000a",
+                "on-primary-container": "#613b00",
+                "tertiary": "#ffbcb7",
+                "primary-fixed": "#ffddb8",
+                "on-surface-variant": "#d8c3ad",
+                "secondary-fixed": "#acf847",
+                "on-secondary-fixed-variant": "#304f00",
+                "on-primary-fixed": "#2a1700",
+                "surface-dim": "#131313",
+                "on-error-container": "#ffdad6",
+                "surface-container-lowest": "#0e0e0e",
+                "outline": "#a08e7a",
+                "on-secondary-container": "#2c4900",
+                "surface-container-high": "#2a2a2a",
+                "surface-tint": "#ffb95f",
+                "surface": "#131313",
+                "on-primary": "#472a00",
+                "on-secondary": "#1f3700",
+                "on-error": "#690005",
+                "tertiary-container": "#ff938c",
+                "on-background": "#e5e2e1",
+                "inverse-primary": "#855300",
+                "tertiary-fixed-dim": "#ffb3ad",
+                "on-secondary-fixed": "#102000",
+                "primary-fixed-dim": "#ffb95f",
+                "on-surface": "#e5e2e1",
+                "on-primary-fixed-variant": "#653e00",
+                "primary": "#ffc174",
+                "surface-bright": "#3a3939",
+                "background": "#131313",
+                "inverse-on-surface": "#313030",
+                "secondary-fixed-dim": "#91db2a",
+                "secondary-container": "#7ac100",
+                "on-tertiary-container": "#8d0012",
+                "error": "#ffb4ab",
+                "on-tertiary-fixed": "#410004",
+                "surface-variant": "#353534",
+                "on-tertiary": "#68000a",
+                "inverse-surface": "#e5e2e1",
+                "primary-container": "#f59e0b",
+                "outline-variant": "#534434"
+            },
+            "borderRadius": {
+                "DEFAULT": "0.125rem",
+                "lg": "0.25rem",
+                "xl": "0.5rem",
+                "full": "0.75rem"
+            },
+            "spacing": {
+                "gutter": "16px",
+                "unit": "8px",
+                "container-max": "1280px",
+                "margin-desktop": "40px",
+                "margin-mobile": "20px"
+            },
+            "fontFamily": {
+                "headline-lg": ["Outfit"],
+                "headline-lg-mobile": ["Outfit"],
+                "headline-sm": ["Outfit"],
+                "headline-md": ["Outfit"],
+                "body-lg": ["Inter"],
+                "body-md": ["Inter"],
+                "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                "headline-lg-mobile": ["32px", {"lineHeight": "1.1", "fontWeight": "700"}],
+                "headline-sm": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                "headline-md": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+      .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+      }
+      
+      input[type="range"] {
+        -webkit-appearance: none;
+        appearance: none;
+        background: transparent;
+        cursor: pointer;
+      }
+
+      input[type="range"]::-webkit-slider-runnable-track {
+        background: rgba(255, 255, 255, 0.1);
+        height: 4px;
+        border-radius: 2px;
+      }
+
+      input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        appearance: none;
+        margin-top: -6px; 
+        background-color: #f59e0b;
+        height: 16px;
+        width: 16px;
+        border-radius: 50%;
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+        transition: transform 0.2s ease;
+      }
+
+      input[type="range"]:active::-webkit-slider-thumb {
+        transform: scale(1.2);
+        box-shadow: 0 0 25px rgba(245, 158, 11, 0.8);
+      }
+
+      .glass-card {
+        background: rgba(23, 23, 23, 0.8);
+        backdrop-filter: blur(24px);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+      }
+
+      .amber-glow {
+        box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+      }
+      
+      .active-chip {
+        background: #f59e0b;
+        color: #0e0e0e;
+        box-shadow: 0 0 12px rgba(245, 158, 11, 0.3);
+      }
+
+      ::-webkit-scrollbar {
+        width: 4px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 10px;
+      }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden">
+<!-- Mock Background for Context -->
+<div class="fixed inset-0 z-0">
+<img class="w-full h-full object-cover opacity-40 grayscale" data-alt="A dimly lit, moody interior of a classic underground dive bar with worn leather stools, vintage neon beer signs, and a thick atmospheric haze. The lighting is dominated by a deep velvet black palette with sharp amber and neon orange highlights. The scene is captured with a high-contrast cinematic style, emphasizing a sense of hidden urban exploration and authentic late-night vibes." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCj0zokRGb17VNJbeK5yJ4ddwjPVtTR1y-pnbLjLb3ihKKgEDiXoyxI1rA90JQVt8oCRTYSsS8MwCkYLqlYzf7nmRGMfdO-SnWIcJ4uVr92KbUtwRv1BZtnsbm6_KXwqWlvC3K4-c-D4RQPpMtyPJhHJkFLeZoOMc3EdbvLjgjGTqumbWpLAhAJBnPwPw6sTlmxl_rYC6Re-zPWyoyaufbhUNMGxlBzQ6tpWIRhY7nUOEr-ghORzhs06AbZaTk90olVfHxp_kxq7ps"/>
+</div>
+<!-- Search & Filters Overlay -->
+<div class="fixed inset-0 z-50 flex items-center justify-center p-4 md:p-8 bg-surface-container-lowest/40 backdrop-blur-md" id="filterOverlay">
+<!-- Main Glass Container -->
+<div class="glass-card w-full max-w-2xl h-[795px] md:h-auto md:max-h-[751px] rounded-xl flex flex-col relative overflow-hidden animate-in fade-in zoom-in duration-300">
+<!-- Top Header (TopAppBar Context) -->
+<header class="flex items-center justify-between px-6 py-4 border-b border-white/10 shrink-0">
+<div class="flex items-center gap-3">
+<button class="p-2 rounded-full hover:bg-white/5 active:scale-95 transition-transform">
+<span class="material-symbols-outlined text-primary">close</span>
+</button>
+<h2 class="font-headline-sm text-headline-sm text-primary tracking-tight">Filter Discovery</h2>
+</div>
+<button class="font-label-caps text-label-caps text-on-surface-variant hover:text-primary transition-colors">RESET ALL</button>
+</header>
+<!-- Scrollable Content Body -->
+<div class="flex-1 overflow-y-auto px-6 py-8 space-y-10 custom-scrollbar pb-32 md:pb-8">
+<!-- Search Input Field -->
+<section class="space-y-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">SEARCH BY NAME</h3>
+<div class="relative group">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-on-surface-variant group-focus-within:text-primary transition-colors">search</span>
+<input class="w-full bg-surface-container-lowest border border-white/10 rounded-xl py-4 pl-12 pr-4 focus:ring-1 focus:ring-primary focus:border-primary transition-all outline-none text-body-lg placeholder:text-on-surface-variant/30" placeholder="The Alibi, Rusty Nail..." type="text"/>
+</div>
+</section>
+<!-- Price Range Slider -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">PRICE RANGE</h3>
+<span class="font-headline-sm text-headline-sm text-primary" id="priceDisplay">$$</span>
+</div>
+<div class="px-2">
+<input class="w-full" id="priceRange" max="4" min="1" oninput="document.getElementById('priceDisplay').innerText = '$'.repeat(this.value)" step="1" type="range" value="2"/>
+<div class="flex justify-between mt-2 font-label-caps text-[10px] text-on-surface-variant/50 px-1">
+<span>BUDGET</span>
+<span>CHEAP</span>
+<span>MID</span>
+<span>PREMIUM</span>
+</div>
+</div>
+</section>
+<!-- Rating Slider -->
+<section class="space-y-6">
+<div class="flex justify-between items-end">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">MINIMUM RATING</h3>
+<div class="flex items-center gap-1 text-primary">
+<span class="font-headline-sm text-headline-sm" id="ratingDisplay">4.0</span>
+<span class="material-symbols-outlined text-sm" style="font-variation-settings: 'FILL' 1;">star</span>
+</div>
+</div>
+<div class="px-2">
+<input class="w-full" id="ratingRange" max="50" min="30" oninput="document.getElementById('ratingDisplay').innerText = (this.value/10).toFixed(1)" step="1" type="range" value="40"/>
+<div class="flex justify-between mt-2 font-label-caps text-[10px] text-on-surface-variant/50 px-1">
+<span>3.0</span>
+<span>4.0</span>
+<span>5.0</span>
+</div>
+</div>
+</section>
+<!-- Feature Chips -->
+<section class="space-y-4">
+<h3 class="font-label-caps text-label-caps text-on-surface-variant">VIBE &amp; AMENITIES</h3>
+<div class="flex flex-wrap gap-3">
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            CRAFT BEER
+                        </button>
+<button class="active-chip px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            POOL TABLE
+                        </button>
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            LIVE MUSIC
+                        </button>
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            CASH ONLY
+                        </button>
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            SMOKING AREA
+                        </button>
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            JUKEBOX
+                        </button>
+<button class="px-5 py-3 rounded-full border border-white/10 bg-surface-container hover:bg-surface-container-high transition-all font-label-caps text-label-caps text-on-surface-variant" onclick="this.classList.toggle('active-chip')">
+                            DARTBOARD
+                        </button>
+</div>
+</section>
+</div>
+<!-- Sticky Bottom Button Area -->
+<div class="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-surface-container via-surface-container/95 to-transparent pt-12">
+<button class="w-full bg-primary-container text-on-primary-container py-5 rounded-xl font-headline-sm text-headline-sm amber-glow active:scale-[0.98] transition-all hover:brightness-110 tracking-tight">
+                    FIND YOUR DIVE
+                </button>
+</div>
+</div>
+</div>
+<!-- Background Elements for Visual Depth -->
+<div class="fixed top-1/4 -left-20 w-64 h-64 bg-primary/10 blur-[100px] rounded-full"></div>
+<div class="fixed bottom-1/4 -right-20 w-80 h-80 bg-secondary/5 blur-[120px] rounded-full"></div>
+<script>
+        // Simple micro-interaction for active chips if not using onclick in HTML
+        document.querySelectorAll('button').forEach(btn => {
+            btn.addEventListener('touchstart', function() {
+                this.classList.add('scale-95');
+            });
+            btn.addEventListener('touchend', function() {
+                this.classList.remove('scale-95');
+            });
+        });
+
+        // Close overlay on escape key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                // In a real app, this would trigger navigation or state change
+                console.log('Close overlay');
+            }
+        });
+    </script>
+</body></html>

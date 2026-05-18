@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport"/>
+<title>Discovery Map | DBDB</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&amp;family=Inter:wght@400;700&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "tertiary-fixed": "#ffdad7",
+                    "surface-container-low": "#1c1b1b",
+                    "surface-container-highest": "#353534",
+                    "secondary": "#94de2d",
+                    "on-tertiary-fixed-variant": "#930013",
+                    "surface-container": "#201f1f",
+                    "error-container": "#93000a",
+                    "on-primary-container": "#613b00",
+                    "tertiary": "#ffbcb7",
+                    "primary-fixed": "#ffddb8",
+                    "on-surface-variant": "#d8c3ad",
+                    "secondary-fixed": "#acf847",
+                    "on-secondary-fixed-variant": "#304f00",
+                    "on-primary-fixed": "#2a1700",
+                    "surface-dim": "#131313",
+                    "on-error-container": "#ffdad6",
+                    "surface-container-lowest": "#0e0e0e",
+                    "outline": "#a08e7a",
+                    "on-secondary-container": "#2c4900",
+                    "surface-container-high": "#2a2a2a",
+                    "surface-tint": "#ffb95f",
+                    "surface": "#131313",
+                    "on-primary": "#472a00",
+                    "on-secondary": "#1f3700",
+                    "on-error": "#690005",
+                    "tertiary-container": "#ff938c",
+                    "on-background": "#e5e2e1",
+                    "inverse-primary": "#855300",
+                    "tertiary-fixed-dim": "#ffb3ad",
+                    "on-secondary-fixed": "#102000",
+                    "primary-fixed-dim": "#ffb95f",
+                    "on-surface": "#e5e2e1",
+                    "on-primary-fixed-variant": "#653e00",
+                    "primary": "#ffc174",
+                    "surface-bright": "#3a3939",
+                    "background": "#131313",
+                    "inverse-on-surface": "#313030",
+                    "secondary-fixed-dim": "#91db2a",
+                    "secondary-container": "#7ac100",
+                    "on-tertiary-container": "#8d0012",
+                    "error": "#ffb4ab",
+                    "on-tertiary-fixed": "#410004",
+                    "surface-variant": "#353534",
+                    "on-tertiary": "#68000a",
+                    "inverse-surface": "#e5e2e1",
+                    "primary-container": "#f59e0b",
+                    "outline-variant": "#534434"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.125rem",
+                    "lg": "0.25rem",
+                    "xl": "0.5rem",
+                    "full": "0.75rem"
+            },
+            "spacing": {
+                    "gutter": "16px",
+                    "unit": "8px",
+                    "container-max": "1280px",
+                    "margin-desktop": "40px",
+                    "margin-mobile": "20px"
+            },
+            "fontFamily": {
+                    "headline-lg": ["Outfit"],
+                    "headline-lg-mobile": ["Outfit"],
+                    "headline-sm": ["Outfit"],
+                    "headline-md": ["Outfit"],
+                    "body-lg": ["Inter"],
+                    "body-md": ["Inter"],
+                    "label-caps": ["Inter"]
+            },
+            "fontSize": {
+                    "headline-lg": ["48px", {"lineHeight": "1.1", "letterSpacing": "-0.02em", "fontWeight": "700"}],
+                    "headline-lg-mobile": ["32px", {"lineHeight": "1.1", "fontWeight": "700"}],
+                    "headline-sm": ["24px", {"lineHeight": "1.3", "fontWeight": "600"}],
+                    "headline-md": ["32px", {"lineHeight": "1.2", "letterSpacing": "-0.01em", "fontWeight": "600"}],
+                    "body-lg": ["18px", {"lineHeight": "1.6", "fontWeight": "400"}],
+                    "body-md": ["16px", {"lineHeight": "1.5", "fontWeight": "400"}],
+                    "label-caps": ["12px", {"lineHeight": "1.0", "letterSpacing": "0.1em", "fontWeight": "700"}]
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        body {
+            background-color: #0a0a0a;
+            color: #e5e2e1;
+            overflow: hidden;
+        }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .map-container {
+            background-image: radial-gradient(circle at 2px 2px, #1a1a1a 1px, transparent 0);
+            background-size: 40px 40px;
+        }
+        .neon-glow {
+            box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+        }
+        .amber-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8)); }
+            50% { opacity: 0.7; transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(245, 158, 11, 1)); }
+        }
+        .glass-panel {
+            background: rgba(23, 23, 23, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+<style>
+    body {
+      min-height: max(884px, 100dvh);
+    }
+  </style>
+  </head>
+<body class="flex flex-col h-screen font-body-md text-body-md selection:bg-primary-container selection:text-on-primary-container">
+<!-- Top Navigation (Shell) -->
+<header class="fixed top-0 w-full z-50 bg-surface-container/80 backdrop-blur-xl border-b border-white/10 shadow-[0_0_15px_rgba(245,158,11,0.1)] flex items-center justify-between px-margin-mobile h-16">
+<div class="flex items-center gap-4">
+<button class="active:scale-95 transition-transform p-2 hover:bg-white/5 rounded-full">
+<span class="material-symbols-outlined text-primary">menu</span>
+</button>
+<h1 class="font-headline-md text-headline-md font-bold text-primary tracking-tighter">DBDB</h1>
+</div>
+<div class="hidden md:flex gap-8">
+<span class="font-label-caps text-label-caps text-primary cursor-pointer">MAP Discovery</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">Explore</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">Favorites</span>
+<span class="font-label-caps text-label-caps text-on-surface-variant/60 hover:text-primary transition-colors cursor-pointer">Profile</span>
+</div>
+<button class="active:scale-95 transition-transform p-2 hover:bg-white/5 rounded-full">
+<span class="material-symbols-outlined text-primary">search</span>
+</button>
+</header>
+<!-- Main Map Canvas -->
+<main class="relative flex-1 w-full overflow-hidden">
+<!-- Mock Map Background -->
+<div class="absolute inset-0 bg-[#0a0a0a] map-container" data-location="New York City" style="">
+<img class="w-full h-full object-cover opacity-20 grayscale brightness-50 contrast-125" data-alt="A cinematic, low-key aerial photograph of a sprawling urban cityscape at night. The streets are dark, outlined by faint, moody lighting and deep shadows. The aesthetic is heavily inspired by neo-noir films, featuring a monochromatic dark grey and black palette with very high contrast. The image creates a sense of mystery and late-night urban exploration, serving as a backdrop for a digital interface." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCxdl2TP7UE-_tpmtWt6RxvPj3U9hmZTYWvbkBHgr6e94hCpbacunVs9j7GJz8z6e3rrTMDgafcv9APKskHgsuYVG746h1xIdgBeE8PIBGftR-zDzjFC6Uh5QwcqaKSt_DXmuSA5hvkGcZZ65qHMHuHpOJrOh3zyF7Cm_XVqyuQOJ6eFEMQ5yK0V-Grm5ydz9x6v_CMMRhASZB1zguj9GYw1JUskW44bj2zWsXCqNpNOE_4P-kQ8x3Tlek0wdKCKW2fvQMC0BrBqN8"/>
+</div>
+<!-- Neon Pins -->
+<div class="absolute top-1/3 left-1/4 group cursor-pointer" onclick="toggleDetails('The Velvet Lounge')">
+<div class="w-4 h-4 bg-primary-container rounded-full neon-glow amber-pulse relative">
+<div class="absolute -top-12 -left-1/2 bg-surface-container-high px-3 py-1 rounded-xl text-xs font-bold border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">The Velvet Lounge</div>
+</div>
+</div>
+<div class="absolute top-1/2 left-2/3 group cursor-pointer" onclick="toggleDetails('Brass &amp; Bone')">
+<div class="w-3 h-3 bg-primary rounded-full neon-glow group-hover:scale-150 transition-transform">
+<div class="absolute -top-12 -left-1/2 bg-surface-container-high px-3 py-1 rounded-xl text-xs font-bold border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Brass &amp; Bone</div>
+</div>
+</div>
+<div class="absolute bottom-1/3 left-1/2 group cursor-pointer" onclick="toggleDetails('Midnight Alley')">
+<div class="w-3 h-3 bg-primary rounded-full neon-glow group-hover:scale-150 transition-transform">
+<div class="absolute -top-12 -left-1/2 bg-surface-container-high px-3 py-1 rounded-xl text-xs font-bold border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">Midnight Alley</div>
+</div>
+</div>
+<!-- Floating UI Overlays -->
+<div class="absolute top-20 left-0 right-0 px-margin-mobile flex flex-col items-center gap-6 pointer-events-none">
+<h2 class="font-headline-lg-mobile md:font-headline-lg text-headline-lg-mobile md:text-headline-lg text-on-surface uppercase tracking-widest text-center drop-shadow-2xl">
+                DISCOVER THE UNDERGROUND
+            </h2>
+<!-- Search Bar -->
+<div class="w-full max-w-xl glass-panel px-4 py-3 rounded-full flex items-center gap-3 pointer-events-auto shadow-2xl">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-body-md w-full placeholder:text-on-surface-variant/40" placeholder="Search hidden gems..." type="text"/>
+<div class="h-6 w-[1px] bg-white/10 mx-1"></div>
+<button class="flex items-center gap-2 text-primary hover:opacity-80 transition-opacity pr-2">
+<span class="material-symbols-outlined">filter_list</span>
+<span class="font-label-caps text-label-caps hidden sm:inline">FILTER</span>
+</button>
+</div>
+</div>
+<!-- Sliding Bottom Sheet (Nearby Bars) -->
+<div class="fixed bottom-20 md:bottom-8 left-0 right-0 z-40 transition-transform duration-500 translate-y-[65%] hover:translate-y-[10%] md:translate-y-0 px-margin-mobile pointer-events-none" id="bottom-sheet">
+<div class="max-w-7xl mx-auto pointer-events-auto">
+<div class="glass-panel p-6 rounded-t-full md:rounded-full shadow-2xl">
+<div class="flex items-center justify-between mb-6">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">explore</span>
+<h3 class="font-headline-sm text-headline-sm">Nearby Dives</h3>
+</div>
+<button class="text-on-surface-variant flex items-center gap-1 hover:text-primary transition-colors">
+<span class="font-label-caps text-label-caps">VIEW LIST</span>
+<span class="material-symbols-outlined">chevron_right</span>
+</button>
+</div>
+<!-- Horizontal Scroll Bento List -->
+<div class="flex gap-4 overflow-x-auto hide-scrollbar pb-2">
+<!-- Card 1 -->
+<div class="min-w-[280px] bg-surface-container-low border border-white/5 rounded-xl overflow-hidden group cursor-pointer hover:border-primary/30 transition-all">
+<div class="h-32 w-full relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A moody, atmospheric interior of a luxury dive bar. The scene is lit with warm, dim amber lighting and features vintage leather booths and a dark wood counter. Smoldering neon signs reflect off high-end glassware and polished surfaces. The overall style is a blend of retro grit and modern polish with a deep black and orange-gold color palette." src="https://lh3.googleusercontent.com/aida-public/AB6AXuD378c1qOwaOCqHrgMdtmtPvU8HybnSCuAN8elj0I7a5wwQi1_dmRf_ypPQxG-ynoqr08qgyYraqvUVWQhiusqxX78lZh-fMscmMk1kLv5_80m9NPtZEijHzrWw87mlNZbDO_zCqZhgJIg7ga3sDbkc-ghChAzFQoib3hpkCPJ-eIY_sL7_RWpRICsBtgI9MshRcEjytAqSQktdAh6spKBwjXkxA7-AHUBvy2QZE_yBAQNPrurW_x1IzY5gRIVh_F8s1RQKvudRt9o"/>
+<div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-primary">0.4 MI</div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-sm text-headline-sm mb-1">The Velvet Lounge</h4>
+<div class="flex items-center gap-2 mb-3">
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Cash Only</span>
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Pool Table</span>
+</div>
+<button class="w-full py-2 bg-primary-container text-on-primary-container font-label-caps text-label-caps rounded-lg neon-glow active:scale-95 transition-all">WALK THERE</button>
+</div>
+</div>
+<!-- Card 2 -->
+<div class="min-w-[280px] bg-surface-container-low border border-white/5 rounded-xl overflow-hidden group cursor-pointer hover:border-primary/30 transition-all">
+<div class="h-32 w-full relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A high-contrast, moody close-up of a neon cocktail sign in a dimly lit bar. The sign glows in a vibrant amber and soft green, casting long shadows across a dark brick wall. The aesthetic is gritty yet premium, capturing the essence of a hidden city gem with cinematic lighting and a velvet-like black background." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDdNrbU9J_uexIYmoF0sRAd54U6-sS_zh2Y7ghsoO5GJT6swwJVv1Ij8m_DCOwc56GVAy_I1xbcErNC8A6bxy58oF15890f73vcPWavFud_SUAPs4TdASh40tJCMFHgIIEWoBVqdknLsH13pRAT0REQafEiT1ktcDH8EqC-rl66chi3YRjrmBwy1_xvV4NrnMITFbD-Jl8dEgEpPXBLuut4lygqmu0p0YgHyv_aA513gb1-fLwLJMZ2d0Hv6hC78wKNNFXFT9eiSms"/>
+<div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-primary">0.9 MI</div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-sm text-headline-sm mb-1">Brass &amp; Bone</h4>
+<div class="flex items-center gap-2 mb-3">
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Speakeasy</span>
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Jazz</span>
+</div>
+<button class="w-full py-2 border border-primary text-primary font-label-caps text-label-caps rounded-lg hover:bg-primary/10 active:scale-95 transition-all">DETAILS</button>
+</div>
+</div>
+<!-- Card 3 -->
+<div class="min-w-[280px] bg-surface-container-low border border-white/5 rounded-xl overflow-hidden group cursor-pointer hover:border-primary/30 transition-all">
+<div class="h-32 w-full relative overflow-hidden">
+<img class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" data-alt="A wide-angle interior shot of a classic underground tavern. The lighting is dominated by a warm, golden amber glow from low-hanging industrial lamps. Wooden stools, a long bar, and vintage posters create an authentic, lived-in atmosphere. The style is dark, moody, and sophisticated, emphasizing texture and depth through rich shadows and glowing accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDOVAFzTqyK4-rsaDKhMvBe6ISB153-FNyZeoVFxKP316T4gSz_D4Mr4_CBUek87w6mDRTwEGteAg3r9BUNiwhjNzKu7kDs5l45rbtH5S3JaM5DmBiBlDQNVDjxBBDBsHhtjgQqJolZkh-CsDnmlG9fRuZuIZuXdRO58nJ9it6Ga3GvkAGOOTKBhDdiaITc_Sk_Asf5Pn_9wCdK5h1qzwGnAoHDK709Sl3oE1BJ69kbq75QJHwqDKUphk29_naSTxwxJvsJA_k4gc8"/>
+<div class="absolute top-2 right-2 bg-black/60 backdrop-blur-md px-2 py-1 rounded text-[10px] font-bold text-primary">1.2 MI</div>
+</div>
+<div class="p-4">
+<h4 class="font-headline-sm text-headline-sm mb-1">Midnight Alley</h4>
+<div class="flex items-center gap-2 mb-3">
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Vinyl Only</span>
+<span class="px-2 py-0.5 bg-white/5 rounded text-[10px] text-on-surface-variant font-bold uppercase">Local Brews</span>
+</div>
+<button class="w-full py-2 border border-primary text-primary font-label-caps text-label-caps rounded-lg hover:bg-primary/10 active:scale-95 transition-all">DETAILS</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</main>
+<!-- Bottom Navigation Shell -->
+<nav class="md:hidden fixed bottom-0 w-full z-50 rounded-t-xl bg-surface-container-lowest/80 backdrop-blur-2xl border-t border-white/5 shadow-[0_-4px_20px_rgba(0,0,0,0.5)] flex justify-around items-center h-20 pb-safe px-4">
+<button class="flex flex-col items-center justify-center text-primary drop-shadow-[0_0_8px_rgba(245,158,11,0.6)] active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">map</span>
+<span class="font-label-caps text-[10px] mt-1">MAP</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">explore</span>
+<span class="font-label-caps text-[10px] mt-1">EXPLORE</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">favorite</span>
+<span class="font-label-caps text-[10px] mt-1">SAVED</span>
+</button>
+<button class="flex flex-col items-center justify-center text-on-surface-variant/60 hover:text-primary/80 active:scale-90 transition-all duration-200">
+<span class="material-symbols-outlined">person</span>
+<span class="font-label-caps text-[10px] mt-1">PROFILE</span>
+</button>
+</nav>
+<!-- Interactive Layer Script -->
+<script>
+        function toggleDetails(name) {
+            console.log('Opening bar:', name);
+            const sheet = document.getElementById('bottom-sheet');
+            sheet.classList.remove('translate-y-[65%]');
+            sheet.classList.add('translate-y-0');
+            // Logic for focusing a specific bar card could go here
+        }
+
+        // Close sheet on map click
+        document.querySelector('.map-container').addEventListener('click', () => {
+            const sheet = document.getElementById('bottom-sheet');
+            if (window.innerWidth < 768) {
+                sheet.classList.add('translate-y-[65%]');
+                sheet.classList.remove('translate-y-0');
+            }
+        });
+
+        // Add small atmospheric movement
+        window.addEventListener('mousemove', (e) => {
+            const moveX = (e.clientX - window.innerWidth / 2) / 100;
+            const moveY = (e.clientY - window.innerHeight / 2) / 100;
+            document.querySelector('.map-container img').style.transform = `scale(1.1) translate(${moveX}px, ${moveY}px)`;
+        });
+    </script>
+</body></html>
