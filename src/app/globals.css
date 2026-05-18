@@ -42,6 +42,8 @@ body {
   color: #e5e2e1;
   font-family: var(--font-sans);
   overflow: hidden; /* Avoid mobile viewport bouncing */
+  height: 100dvh;
+  min-height: 100dvh;
 }
 
 /* Glassmorphism & Glooming elements */
@@ -286,4 +288,14 @@ body {
   padding: 0 !important;
   margin: 0 !important;
   border: none !important;
+}
+
+/* Fix Leaflet map white/light gray background flicker */
+.leaflet-container {
+  background-color: #131313 !important;
+}
+
+/* Hide Leaflet watermark & attribution details globally */
+.leaflet-control-attribution {
+  display: none !important;
 }

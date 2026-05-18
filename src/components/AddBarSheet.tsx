@@ -229,7 +229,7 @@ export default function AddBarSheet({
 
       {/* Overlay Backdrop */}
       <div
-        className="fixed inset-0 z-40 bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:bg-black/40"
+        className="fixed inset-0 z-[990] bg-black/60 backdrop-blur-sm transition-opacity duration-300 md:bg-black/40"
         onClick={() => {
           onClose();
           onCancelNewPin();
@@ -238,7 +238,7 @@ export default function AddBarSheet({
 
       {/* Responsive Slide-Over Drawer */}
       <div
-        className={`fixed z-50 transition-all duration-300 ease-out border-neutral-800/80 bg-neutral-900/90 backdrop-blur-xl shadow-2xl flex flex-col
+        className={`fixed z-[1000] transition-all duration-300 ease-out border-neutral-800/80 bg-neutral-900/90 backdrop-blur-xl shadow-2xl flex flex-col
           bottom-0 left-0 w-full h-[85vh] rounded-t-2xl border-t border-x
           md:top-0 md:right-0 md:left-auto md:w-[420px] md:h-full md:rounded-none md:border-l md:border-t-0`}
       >

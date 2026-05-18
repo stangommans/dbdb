@@ -34,6 +34,7 @@ model Review {
   murkiness     String?  // "MURKY" | "AVERAGE" | "ACTUALLY_NICE"
   comment       String?  // Optional text review
   photoUrl      String?  // Path to local public upload
+  amenities     String?  // Comma-separated list of tags (e.g. "POOL_TABLE,CASH_ONLY")
   
   // Cryptographic signature matching user's cookie to prevent double votes and allow editing
   reviewerToken String   

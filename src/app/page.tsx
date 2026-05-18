@@ -30,6 +30,7 @@ interface Review {
   photoUrl: string | null;
   reviewerToken: string;
   createdAt: string;
+  amenities?: string | null;
 }
 
 interface Bar {
@@ -69,7 +70,8 @@ export default function Home() {
   const [isAddBarOpen, setIsAddBarOpen] = useState(false);
   const [isReviewOpen, setIsReviewOpen] = useState(false);
   const [editingReview, setEditingReview] = useState<Review | null>(null);
-  
+  const [isMobileListOpen, setIsMobileListOpen] = useState(false);
+
   // Real-time Filters Overlay states
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [priceRange, setPriceRange] = useState<number>(5);
@@ -118,7 +120,7 @@ export default function Home() {
           console.error('Failed to parse stash from localStorage:', e);
         }
       }
-      
+
       const adminStored = localStorage.getItem('dbdb_admin_passcode');
       if (adminStored) {
         setAdminPasscode(adminStored);
@@ -229,6 +231,39 @@ export default function Home() {
     (review) => review.reviewerToken === userUuid
   );
 
+  // Get aggregated user-submitted amenity counts for the selected bar
+  const votedAmenities = selectedBar
+    ? (() => {
+      const counts: Record<string, number> = {};
+      selectedBar.reviews.forEach((r) => {
+        if (r.amenities) {
+          r.amenities.split(',').forEach((tag) => {
+            const trimmed = tag.trim();
+            if (trimmed) counts[trimmed] = (counts[trimmed] || 0) + 1;
+          });
+        }
+      });
+
+      const labels: Record<string, string> = {
+        CASH_ONLY: "💵 Cash Only",
+        POOL_TABLE: "🎱 Pool Table",
+        LIVE_MUSIC: "🎸 Live Music",
+        CRAFT_BEER: "🍺 Craft Beer",
+        SMOKING_AREA: "🚬 Smoking Area",
+        JUKEBOX: "🎵 Jukebox",
+        DARTBOARD: "🎯 Dartboard",
+      };
+
+      return Object.entries(counts)
+        .map(([key, count]) => ({
+          key,
+          label: labels[key] || key,
+          count
+        }))
+        .sort((a, b) => b.count - a.count);
+    })()
+    : [];
+
   // Real-time Filters & Sort logic
   const filteredAndSortedBars = bars
     .filter((bar) => {
@@ -286,10 +321,10 @@ export default function Home() {
   };
 
   return (
-    <main className="relative w-screen h-screen bg-[#131313] text-[#e5e2e1] flex flex-col overflow-hidden font-sans">
-      
+    <main className="relative w-screen h-[100dvh] bg-[#131313] text-[#e5e2e1] flex flex-col overflow-hidden font-sans">
+
       {/* 1. TOP APP BAR GLASS HEADER */}
-      <header className="w-full shrink-0 h-16 glass-panel border-x-0 border-t-0 px-6 flex items-center justify-between z-30">
+      <header className="w-full shrink-0 h-16 glass-panel border-x-0 border-t-0 px-6 flex items-center justify-between z-[600]">
         {/* Brand details */}
         <div className="flex items-center gap-3 select-none">
           <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.85)] font-sans animate-pulse">🍺</span>
@@ -305,6 +340,31 @@ export default function Home() {
             </span>
           </div>
         </div>
+
+        {/* Desktop tab navigation */}
+        <nav className="hidden md:flex items-center gap-1 bg-[#181818]/60 border border-white/5 rounded-xl p-0.5">
+          {[
+            { id: 'MAP', label: 'Map', icon: 'map' },
+            { id: 'EXPLORE', label: 'Explore', icon: 'explore' },
+            { id: 'STASH', label: 'My Stash', icon: 'favorite' },
+            { id: 'PROFILE', label: 'Profile', icon: 'person' }
+          ].map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as Tab)}
+                className={`px-3.5 py-1.5 rounded-lg font-display text-[10px] font-extrabold tracking-widest uppercase transition-all cursor-pointer flex items-center gap-1.5 active:scale-95
+                  ${active
+                    ? 'bg-primary-container text-on-primary-container shadow-md'
+                    : 'text-on-surface-variant hover:text-white'}`}
+              >
+                <span className="material-symbols-outlined text-[15px]" style={{ fontVariationSettings: ` 'FILL' ${active ? '1' : '0'} ` }}>{tab.icon}</span>
+                <span>{tab.label}</span>
+              </button>
+            );
+          })}
+        </nav>
 
         {/* Global actions bar */}
         <div className="flex items-center gap-3">
@@ -338,9 +398,9 @@ export default function Home() {
 
       {/* 2. BODY CONTENT PANEL VIEWS ROUTER */}
       <div className="flex-1 w-full relative overflow-hidden">
-        
+
         {/* MAP VIEW TAB */}
-        <div className={`absolute inset-0 z-10 w-full h-full transition-opacity duration-300 
+        <div className={`absolute inset-0 z-10 w-full h-full bg-[#131313] transition-opacity duration-300 
           ${activeTab === 'MAP' ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
         >
           <Map
@@ -351,29 +411,57 @@ export default function Home() {
             newPinCoords={newPinCoords}
           />
 
-          {/* Floating Sidebar overlays (Desktop/Tablet list overlay) */}
-          <div className="absolute left-6 top-6 bottom-6 z-[450] w-[380px] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300 max-md:hidden transform translate-z-0">
+          {/* Floating Mobile List Trigger */}
+          {!selectedBarId && (
+            <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[400] md:hidden animate-in fade-in slide-in-from-bottom-2 duration-200">
+              <button
+                onClick={() => setIsMobileListOpen(true)}
+                className="px-5 py-3 bg-[#131313]/90 backdrop-blur-md border border-white/10 text-primary hover:text-white active:scale-95 font-display text-[10px] font-bold tracking-widest uppercase rounded-full transition-all shadow-2xl shadow-black/80 flex items-center gap-2"
+              >
+                <span className="material-symbols-outlined text-[16px]">list</span>
+                <span>List View ({filteredAndSortedBars.length})</span>
+              </button>
+            </div>
+          )}
+
+          {/* Floating Sidebar overlays (Desktop/Tablet list overlay, slide-over drawer on mobile) */}
+          <div className={`absolute left-6 top-6 bottom-6 z-[450] w-[380px] max-w-[calc(100vw-48px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300 transform translate-z-0
+            ${isMobileListOpen
+              ? 'max-md:left-4 max-md:top-4 max-md:bottom-4 max-md:translate-x-0 max-md:opacity-100'
+              : 'max-md:left-4 max-md:top-4 max-md:bottom-4 max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
+            }
+          `}>
             {/* Quick stats and sort dropdown */}
             <div className="p-4 border-b border-white/5 bg-surface-container-lowest/20 flex items-center justify-between flex-shrink-0">
               <span className="font-display text-[10px] font-bold text-primary tracking-widest uppercase">
                 Discover dives ({filteredAndSortedBars.length})
               </span>
-              <div className="flex bg-surface-container-lowest border border-white/5 rounded-xl p-0.5">
-                {[
-                  { key: 'rating', label: 'Score' },
-                  { key: 'reviews', label: 'Reviews' }
-                ].map((item) => (
-                  <button
-                    key={item.key}
-                    onClick={() => setSortBy(item.key as any)}
-                    className={`px-2.5 py-1.5 rounded-lg font-display text-[9px] font-bold tracking-wider uppercase transition-all cursor-pointer
-                      ${sortBy === item.key
-                        ? 'bg-primary-container text-on-primary-container shadow-md shadow-amber-500/10'
-                        : 'text-on-surface-variant hover:text-white'}`}
-                  >
-                    {item.label}
-                  </button>
-                ))}
+              <div className="flex items-center gap-2">
+                <div className="flex bg-surface-container-lowest border border-white/5 rounded-xl p-0.5">
+                  {[
+                    { key: 'rating', label: 'Score' },
+                    { key: 'reviews', label: 'Reviews' }
+                  ].map((item) => (
+                    <button
+                      key={item.key}
+                      onClick={() => setSortBy(item.key as any)}
+                      className={`px-2.5 py-1.5 rounded-lg font-display text-[9px] font-bold tracking-wider uppercase transition-all cursor-pointer
+                        ${sortBy === item.key
+                          ? 'bg-primary-container text-on-primary-container shadow-md shadow-amber-500/10'
+                          : 'text-on-surface-variant hover:text-white'}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
+                {/* Mobile close drawer trigger */}
+                <button
+                  onClick={() => setIsMobileListOpen(false)}
+                  className="p-1.5 bg-[#242424] hover:bg-[#2d2d2d] border border-white/5 rounded-xl text-neutral-400 hover:text-white md:hidden flex items-center justify-center transition-all cursor-pointer"
+                  title="Close List View"
+                >
+                  <span className="material-symbols-outlined text-[16px]">close</span>
+                </button>
               </div>
             </div>
 
@@ -399,14 +487,17 @@ export default function Home() {
               ) : (
                 filteredAndSortedBars.map((bar) => {
                   const active = bar.id === selectedBarId;
-                  const priceTag = bar.averageRelativePrice 
-                    ? "$".repeat(Math.round(bar.averageRelativePrice)) 
+                  const priceTag = bar.averageRelativePrice
+                    ? "$".repeat(Math.round(bar.averageRelativePrice))
                     : null;
 
                   return (
                     <div
                       key={bar.id}
-                      onClick={() => setSelectedBarId(bar.id)}
+                      onClick={() => {
+                        setSelectedBarId(bar.id);
+                        setIsMobileListOpen(false);
+                      }}
                       className={`p-3.5 rounded-xl border transition-all cursor-pointer select-none group relative overflow-hidden
                         ${active
                           ? 'border-primary-container bg-primary-container/5 shadow-lg'
@@ -422,7 +513,7 @@ export default function Home() {
                         </div>
                       </div>
                       <p className="text-xs text-on-surface-variant font-light mt-1.5 line-clamp-1">{bar.address}</p>
-                      
+
                       <div className="flex items-center gap-2.5 mt-3 pt-3 border-t border-white/5 text-[10px] font-bold text-on-surface-variant tracking-wider uppercase">
                         <span>{bar.reviewCount} Review{bar.reviewCount === 1 ? '' : 's'}</span>
                         {priceTag && (
@@ -485,7 +576,7 @@ export default function Home() {
         {/* DETAILS DRAWER / SIDE-SHEET (Shared across app) */}
         {selectedBar && (
           <div
-            className="absolute right-6 top-6 bottom-6 z-[460] w-[420px] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300
+            className="absolute right-6 top-6 bottom-6 z-[550] w-[420px] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300
               max-md:left-0 max-md:right-0 max-md:top-auto max-md:bottom-0 max-md:w-full max-md:h-[65vh] max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:border-t transform translate-z-0"
           >
             {/* Drawer Header detail */}
@@ -529,7 +620,7 @@ export default function Home() {
 
             {/* Scrollable details panel */}
             <div className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar">
-              
+
               {/* Aggregated widgets grid */}
               <div className="grid grid-cols-2 gap-4">
                 {/* Star rating panel */}
@@ -551,11 +642,11 @@ export default function Home() {
                     {selectedBar.averageRelativePrice !== null ? renderRelativePriceTag(selectedBar.averageRelativePrice) : 'N/A'}
                   </div>
                   <span className="text-[10px] text-on-surface-variant mt-1.5 font-bold uppercase tracking-wider">
-                    {selectedBar.averageRelativePrice !== null 
-                      ? selectedBar.averageRelativePrice <= 2 
-                        ? '🟢 Inexpensive' 
-                        : selectedBar.averageRelativePrice >= 4 
-                          ? '🔴 Pricier Pub' 
+                    {selectedBar.averageRelativePrice !== null
+                      ? selectedBar.averageRelativePrice <= 2
+                        ? '🟢 Inexpensive'
+                        : selectedBar.averageRelativePrice >= 4
+                          ? '🔴 Pricier Pub'
                           : '🟡 Average Pricing'
                       : 'No price ratings'}
                   </span>
@@ -597,6 +688,31 @@ export default function Home() {
                 )}
               </div>
 
+              {/* Reviewer Vibe & Amenities Summary */}
+              <div className="p-4 bg-surface-container-low border border-white/5 rounded-2xl space-y-3">
+                <span className="block text-[10px] font-bold uppercase tracking-widest text-primary">Vibe & Amenities Summary</span>
+                {votedAmenities.length > 0 ? (
+                  <div className="flex flex-wrap gap-2.5">
+                    {votedAmenities.map((amenity) => (
+                      <div
+                        key={amenity.key}
+                        className="px-3 py-1.5 rounded-xl border border-amber-500/10 bg-amber-500/5 text-xs text-white font-medium flex items-center gap-1.5 filter drop-shadow-[0_0_4px_rgba(245,158,11,0.1)] animate-fadeIn"
+                      >
+                        <span>{amenity.label}</span>
+                        <span className="text-[10px] font-extrabold text-amber-500 px-1 bg-amber-500/10 rounded-md">
+                          {amenity.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-2 text-neutral-400">
+                    <p className="text-xs">No vibe tags submitted yet.</p>
+                    <p className="text-[9px] text-neutral-500 font-semibold uppercase tracking-wider mt-0.5">Be the first to rate & add tag metrics!</p>
+                  </div>
+                )}
+              </div>
+
               {/* Action items triggers */}
               <div className="flex gap-3">
                 <button
@@ -609,7 +725,7 @@ export default function Home() {
                   <span className="material-symbols-outlined text-[16px]">edit_note</span>
                   {userReviewForSelectedBar ? 'Edit My Review' : 'Write Review'}
                 </button>
-                
+
                 <a
                   href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(selectedBar.name + ' ' + selectedBar.address)}`}
                   target="_blank"
@@ -624,7 +740,7 @@ export default function Home() {
               {/* Reviews timeline timeline */}
               <div className="space-y-4">
                 <span className="block text-[10px] font-bold uppercase tracking-widest text-primary border-b border-white/5 pb-2">Reviews ({selectedBar.reviews.length})</span>
-                
+
                 {selectedBar.reviews.length === 0 ? (
                   <div className="text-center py-8 bg-surface-container-low/30 border border-white/5 rounded-2xl text-xs text-on-surface-variant font-light">
                     No ratings yet. Be the first to leave a mark!
@@ -651,7 +767,7 @@ export default function Home() {
                                 })}
                               </span>
                             </div>
-                              <div className="flex items-center gap-2.5">
+                            <div className="flex items-center gap-2.5">
                               {isOwnReview && (
                                 <button
                                   onClick={() => {
@@ -677,7 +793,7 @@ export default function Home() {
                           </div>
 
                           {/* Dynamic metadata filters tags */}
-                          {(review.murkiness || review.relativePrice) && (
+                          {(review.murkiness || review.relativePrice || review.amenities) && (
                             <div className="flex flex-wrap gap-1.5 mt-2.5">
                               {review.murkiness && (
                                 <span className="text-[9px] font-bold tracking-wider uppercase px-2 py-0.5 rounded bg-surface-container-lowest border border-white/5 text-on-surface-variant">
@@ -691,6 +807,25 @@ export default function Home() {
                                   {renderRelativePriceTag(review.relativePrice)}
                                 </span>
                               )}
+                              {review.amenities && (() => {
+                                const labels: Record<string, string> = {
+                                  CASH_ONLY: "💵 Cash Only",
+                                  POOL_TABLE: "🎱 Pool Table",
+                                  LIVE_MUSIC: "🎸 Live Music",
+                                  CRAFT_BEER: "🍺 Craft Beer",
+                                  SMOKING_AREA: "🚬 Smoking Area",
+                                  JUKEBOX: "🎵 Jukebox",
+                                  DARTBOARD: "🎯 Dartboard",
+                                };
+                                return review.amenities.split(',').filter(Boolean).map((tag) => (
+                                  <span
+                                    key={tag}
+                                    className="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500 filter drop-shadow-[0_0_2px_rgba(245,158,11,0.05)]"
+                                  >
+                                    {labels[tag.trim()] || tag.trim()}
+                                  </span>
+                                ));
+                              })()}
                             </div>
                           )}
 
@@ -729,7 +864,7 @@ export default function Home() {
       </div>
 
       {/* 3. MOBILE APP SYSTEM BOTTOM NAVIGATION BAR */}
-      <nav className="w-full shrink-0 h-16 glass-panel border-x-0 border-b-0 px-6 flex items-center justify-around z-30 bg-[#1c1b1b]/95">
+      <nav className="w-full shrink-0 h-16 glass-panel border-x-0 border-b-0 px-6 flex items-center justify-around z-[500] bg-[#1c1b1b]/95 md:hidden">
         {[
           { id: 'MAP', label: 'Map', icon: 'map' },
           { id: 'EXPLORE', label: 'Explore', icon: 'explore' },
@@ -745,13 +880,13 @@ export default function Home() {
                 // Retain active selection states
               }}
               className={`flex flex-col items-center justify-center gap-1.5 transition-all cursor-pointer select-none active:scale-95 px-4 py-1 rounded-xl
-                ${active 
-                  ? 'text-primary' 
+                ${active
+                  ? 'text-primary'
                   : 'text-on-surface-variant hover:text-white'}`}
             >
-              <span 
+              <span
                 className="material-symbols-outlined text-[22px] transition-transform duration-200"
-                style={{ 
+                style={{
                   fontVariationSettings: ` 'FILL' ${active ? '1' : '0'} `,
                   transform: active ? 'scale(1.1)' : 'scale(1)'
                 }}
@@ -792,8 +927,8 @@ export default function Home() {
 
       {/* 6. WRITE / EDIT DIVE REVIEW SHEET */}
       {isReviewOpen && selectedBar && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-[440px] h-[90vh] md:h-auto md:max-h-[85vh]">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-[440px] max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <ReviewForm
               barId={selectedBar.id}
               barName={selectedBar.name}

@@ -13,10 +13,21 @@ interface ReviewFormProps {
     murkiness: string | null;
     comment: string | null;
     photoUrl: string | null;
+    amenities?: string | null;
   } | null;
   onClose: () => void;
   onReviewSubmitted: (review: any) => void;
 }
+
+const AMENITIES_OPTIONS = [
+  { key: "CASH_ONLY", label: "💵 Cash Only" },
+  { key: "POOL_TABLE", label: "🎱 Pool Table" },
+  { key: "LIVE_MUSIC", label: "🎸 Live Music" },
+  { key: "CRAFT_BEER", label: "🍺 Craft Beer" },
+  { key: "SMOKING_AREA", label: "🚬 Smoking Area" },
+  { key: "JUKEBOX", label: "🎵 Jukebox" },
+  { key: "DARTBOARD", label: "🎯 Dartboard" },
+];
 
 export default function ReviewForm({
   barId,
@@ -30,9 +41,7 @@ export default function ReviewForm({
   // Form states
   const [diveScore, setDiveScore] = useState<number>(existingReview?.diveScore || 0);
   const [hoverScore, setHoverScore] = useState<number>(0);
-  const [showDetailed, setShowDetailed] = useState<boolean>(
-    !!(existingReview?.pricePerMl || existingReview?.relativePrice || existingReview?.murkiness || existingReview?.comment || existingReview?.photoUrl)
-  );
+  const [showDetailed, setShowDetailed] = useState<boolean>(true);
 
   // Optional states
   const [pricePerMl, setPricePerMl] = useState<string>(existingReview?.pricePerMl?.toString() || '');
@@ -40,6 +49,9 @@ export default function ReviewForm({
   const [murkiness, setMurkiness] = useState<string>(existingReview?.murkiness || '');
   const [comment, setComment] = useState<string>(existingReview?.comment || '');
   const [photoUrl, setPhotoUrl] = useState<string>(existingReview?.photoUrl || '');
+  const [selectedAmenities, setSelectedAmenities] = useState<string[]>(
+    existingReview?.amenities ? existingReview.amenities.split(',').filter(Boolean) : []
+  );
 
   // Upload states
   const [uploading, setUploading] = useState<boolean>(false);
@@ -104,7 +116,8 @@ export default function ReviewForm({
       relativePrice: showDetailed ? relativePrice : null,
       murkiness: showDetailed ? (murkiness || null) : null,
       comment: showDetailed ? (comment.trim() || null) : null,
-      photoUrl: showDetailed ? (photoUrl || null) : null
+      photoUrl: showDetailed ? (photoUrl || null) : null,
+      amenities: showDetailed && selectedAmenities.length > 0 ? selectedAmenities.join(',') : null
     };
 
     try {
@@ -132,9 +145,9 @@ export default function ReviewForm({
   };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950/80 backdrop-blur-xl border border-neutral-800/80 rounded-2xl p-6 text-white overflow-y-auto custom-scrollbar shadow-2xl">
+    <div className="flex flex-col h-full bg-neutral-950/80 backdrop-blur-xl border border-neutral-800/80 rounded-2xl p-4 sm:p-6 text-white overflow-y-auto custom-scrollbar shadow-2xl">
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-neutral-800/60 pb-4 mb-4">
+      <div className="flex items-center justify-between border-b border-neutral-800/60 pb-3 sm:pb-4 mb-3 sm:mb-4">
         <div>
           <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500">
             {isEditMode ? 'Edit Existing Review' : 'Anonymous Rating'}
@@ -151,13 +164,13 @@ export default function ReviewForm({
         </button>
       </div>
 
-      <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-5">
+      <form onSubmit={handleSubmit} className="flex-1 flex flex-col space-y-3.5 sm:space-y-5">
         {/* MANDATORY: Diveyness Score */}
         <div className="space-y-2 text-center py-2 bg-neutral-900/40 border border-neutral-800/40 rounded-2xl">
           <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
             Rate Overall Diveyness (Mandatory)
           </label>
-          <div className="flex items-center justify-center gap-1.5 my-1">
+          <div className="flex items-center justify-center gap-1 my-1">
             {[1, 2, 3, 4, 5].map((star) => {
               const active = star <= (hoverScore || diveScore);
               return (
@@ -167,14 +180,14 @@ export default function ReviewForm({
                   onClick={() => setDiveScore(star)}
                   onMouseEnter={() => setHoverScore(star)}
                   onMouseLeave={() => setHoverScore(0)}
-                  className="p-1 transition-transform active:scale-95 duration-100 focus:outline-none"
+                  className="p-0.5 transition-transform active:scale-95 duration-100 focus:outline-none"
                 >
                   <svg
-                    className={`w-9 h-9 transition-colors duration-150 ${
+                    className={`w-8 h-8 sm:w-9 h-9 transition-colors duration-150 ${
                       active
                         ? 'text-amber-500 filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'
                         : 'text-neutral-800 hover:text-neutral-600'
-                    }`}
+                     }`}
                     fill="currentColor"
                     viewBox="0 0 20 20"
                   >
@@ -208,13 +221,13 @@ export default function ReviewForm({
 
         {/* OPTIONAL: Detailed ratings drawer */}
         {showDetailed && (
-          <div className="space-y-4 pt-1 animate-fadeIn">
+          <div className="space-y-3 sm:space-y-4 pt-1 animate-fadeIn">
             {/* Murkiness Segment Buttons */}
             <div className="space-y-1.5">
               <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
                 Murkiness Level
               </label>
-              <div className="grid grid-cols-3 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 {[
                   { value: 'MURKY', label: '🟢 Murky', desc: 'Worn & dim' },
                   { value: 'AVERAGE', label: '🟡 Average', desc: 'Standard pub' },
@@ -224,7 +237,7 @@ export default function ReviewForm({
                     type="button"
                     key={item.value}
                     onClick={() => setMurkiness(murkiness === item.value ? '' : item.value)}
-                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all active:scale-[0.98]
+                    className={`flex flex-col items-center justify-center p-1.5 sm:p-2 rounded-xl border transition-all active:scale-[0.98]
                       ${
                         murkiness === item.value
                           ? 'border-amber-500 bg-amber-500/10 text-white font-medium'
@@ -238,8 +251,41 @@ export default function ReviewForm({
               </div>
             </div>
 
+            {/* Amenities & Vibes toggle chips */}
+            <div className="space-y-1.5">
+              <label className="block text-xs font-semibold uppercase tracking-wider text-neutral-400">
+                Amenities & Vibes
+              </label>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {AMENITIES_OPTIONS.map((option) => {
+                  const active = selectedAmenities.includes(option.key);
+                  return (
+                    <button
+                      type="button"
+                      key={option.key}
+                      onClick={() => {
+                        if (selectedAmenities.includes(option.key)) {
+                          setSelectedAmenities(selectedAmenities.filter((a) => a !== option.key));
+                        } else {
+                          setSelectedAmenities([...selectedAmenities, option.key]);
+                        }
+                      }}
+                      className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all active:scale-95 cursor-pointer
+                        ${
+                          active
+                            ? 'border-amber-500 bg-amber-500/10 text-white font-medium filter drop-shadow-[0_0_6px_rgba(245,158,11,0.25)]'
+                            : 'border-neutral-800 bg-neutral-900/20 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
+                        }`}
+                    >
+                      {option.label}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
             {/* Relative Price Slider */}
-            <div className="space-y-1.5 p-3.5 bg-neutral-900/30 border border-neutral-800/40 rounded-xl">
+            <div className="space-y-1.5 p-2.5 sm:p-3.5 bg-neutral-900/30 border border-neutral-800/40 rounded-xl">
               <div className="flex justify-between items-center text-xs font-semibold">
                 <span className="text-neutral-400 uppercase tracking-wider">Relative Prices</span>
                 <span className="text-amber-500 font-bold">
@@ -268,14 +314,14 @@ export default function ReviewForm({
                   Value Index (Price per ml / Optional)
                 </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-3.5 text-sm text-neutral-500">€</span>
+                  <span className="absolute left-4 top-3 text-sm text-neutral-500">€</span>
                   <input
                     type="number"
                     step="0.0001"
                     placeholder="e.g. 0.008 (3.00 euro / 330ml)"
                     value={pricePerMl}
                     onChange={(e) => setPricePerMl(e.target.value)}
-                    className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-xl pl-8 pr-4 py-3 text-sm focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder-neutral-600"
+                    className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-xl pl-8 pr-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder-neutral-600"
                   />
                 </div>
               </div>
@@ -288,10 +334,10 @@ export default function ReviewForm({
               </label>
               <textarea
                 placeholder="Share your experience (sticky floors, cheap beer, authentic music...)"
-                rows={3}
+                rows={2}
                 value={comment}
                 onChange={(e) => setComment(e.target.value)}
-                className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder-neutral-600 resize-none"
+                className="w-full bg-neutral-950/80 border border-neutral-800 text-white rounded-xl px-4 py-2.5 sm:py-3 text-sm focus:outline-none focus:border-amber-500/80 focus:ring-1 focus:ring-amber-500/30 transition-all placeholder-neutral-600 resize-none"
               />
             </div>
 
@@ -321,7 +367,7 @@ export default function ReviewForm({
                 // File Upload Trigger Area
                 <div
                   onClick={() => fileInputRef.current?.click()}
-                  className="border border-dashed border-neutral-800 hover:border-neutral-600 rounded-xl p-4 flex flex-col items-center justify-center bg-neutral-905/30 cursor-pointer transition-all py-6 text-center"
+                  className="border border-dashed border-neutral-800 hover:border-neutral-600 rounded-xl p-3 sm:p-4 flex flex-col items-center justify-center bg-neutral-905/30 cursor-pointer transition-all py-4 sm:py-6 text-center"
                 >
                   <input
                     ref={fileInputRef}
@@ -358,7 +404,7 @@ export default function ReviewForm({
         <button
           type="submit"
           disabled={submitting}
-          className="w-full bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center mt-auto"
+          className="w-full bg-amber-500 hover:bg-amber-400 text-neutral-950 font-bold py-3 sm:py-3.5 px-4 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center mt-auto"
         >
           {submitting ? (
             <span className="flex h-5 w-5 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent" />

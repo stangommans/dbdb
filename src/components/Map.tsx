@@ -54,7 +54,8 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     const map = L.map(mapContainerRef.current, {
       center: [52.3676, 4.9041],
       zoom: 13,
-      zoomControl: false
+      zoomControl: false,
+      attributionControl: false
     });
 
     // Zoom controls on top-right for a cleaner mobile layout

@@ -11,7 +11,7 @@ export async function PUT(
     const { id } = await context.params;
     
     const body = await request.json();
-    const { diveScore, pricePerMl, relativePrice, murkiness, comment, photoUrl } = body;
+    const { diveScore, pricePerMl, relativePrice, murkiness, comment, photoUrl, amenities } = body;
 
     if (!diveScore) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -49,8 +49,12 @@ export async function PUT(
         murkiness: murkiness || null,
         comment: comment || null,
         photoUrl: photoUrl || null,
+        amenities: amenities || null,
       },
     });
+
+    // Recalculate parent bar's amenities tags union
+    await syncBarAmenities(updatedReview.barId);
 
     return NextResponse.json(updatedReview);
   } catch (error) {
@@ -86,9 +90,43 @@ export async function DELETE(
       where: { id },
     });
 
+    // Recalculate parent bar's amenities tags union after review deletion
+    await syncBarAmenities(review.barId);
+
     return NextResponse.json({ success: true, message: 'Review successfully purged.' });
   } catch (error) {
     console.error('Error deleting review:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
+// Utility to aggregate and sync all unique amenities from reviews back to the parent bar
+async function syncBarAmenities(barId: string) {
+  try {
+    const siblingReviews = await db.review.findMany({
+      where: { barId },
+      select: { amenities: true }
+    });
+
+    const uniqueAmenities = new Set<string>();
+    siblingReviews.forEach(r => {
+      if (r.amenities) {
+        r.amenities.split(',').forEach(tag => {
+          const trimmed = tag.trim();
+          if (trimmed) uniqueAmenities.add(trimmed);
+        });
+      }
+    });
+
+    const barAmenitiesString = uniqueAmenities.size > 0 
+      ? Array.from(uniqueAmenities).join(',') 
+      : null;
+
+    await db.bar.update({
+      where: { id: barId },
+      data: { amenities: barAmenitiesString }
+    });
+  } catch (err) {
+    console.error('Failed to sync parent bar amenities on update/delete:', err);
   }
 }
