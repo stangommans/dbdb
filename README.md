@@ -103,3 +103,11 @@ To moderate spots and reviews:
 2. Under **System Administration**, enter your configured `ADMIN_PASSCODE` (default is `dbdb-admin` or `dbdb2026`).
 3. Click **Unlock System** — a pulsing status indicator dot will activate in the top header.
 4. Click on any bar pin or bento card to open its Detailed Drawer. Click the red trash button next to the heart (for spots) or the timeline delete buttons (for reviews) to purge data.
+
+---
+
+## 🔮 Future Roadmap
+*   [ ] **Major Upgrade to Prisma v7**: Complete the transition to the latest Prisma engine (`v7.8.0`+). This architectural upgrade will involve:
+    *   Migrating the database connection string locator out of the `prisma/schema.prisma` file and centralizing it inside a programmatic `prisma.config.ts`.
+    *   Integrating official Prisma driver adapters (e.g. `@prisma/adapter-better-sqlite3` combined with standard `better-sqlite3` native drivers) to support direct SQLite connections in runtime standalone Next.js environments, ensuring compatibility with the new v7 constructor requirements.
+

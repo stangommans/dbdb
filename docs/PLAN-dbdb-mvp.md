@@ -235,3 +235,10 @@ Before declaring the MVP ready for VPS deploy:
 - [ ] **Anoymous Editing:** Submit a review, verify it locks, click "Edit Review", submit a change, and confirm the DB updates.
 - [ ] **Aesthetics Check:** Ensure responsive glassmorphism styles, dark mode consistency, and smooth micro-animations. No generic button styling.
 - [ ] **CapRover Volume Bindings Plan:** Verify that CapRover persistent storage is mapped to `/app/prisma/dev.db` and `/app/public/uploads` so that databases and uploads are preserved across container updates.
+
+---
+
+## 🔮 Future Roadmap
+- [ ] **Major Upgrade to Prisma v7**: Complete the transition to the latest Prisma engine (`v7.8.0`+). This architectural upgrade will involve:
+  - Migrating the database connection string locator out of the `prisma/schema.prisma` file and centralizing it inside a programmatic `prisma.config.ts`.
+  - Integrating official Prisma driver adapters (e.g. `@prisma/adapter-better-sqlite3` combined with standard `better-sqlite3` native drivers) to support direct SQLite connections in runtime standalone Next.js environments, ensuring compatibility with the new v7 constructor requirements.
