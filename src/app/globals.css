@@ -17,10 +17,10 @@
   --color-outline: #a08e7a;
   --color-outline-variant: #534434;
 
-  --color-primary: #ffc174;
-  --color-on-primary: #472a00;
-  --color-primary-container: #f59e0b;
-  --color-on-primary-container: #613b00;
+  --color-primary: #ffdf74;
+  --color-on-primary: #3a2e00;
+  --color-primary-container: #f5c518;
+  --color-on-primary-container: #3a2e00;
 
   --color-secondary: #84cc16; /* Success: Murky Olive actually nice */
   --color-rust: #ef4444; /* High Price alert */
@@ -33,8 +33,21 @@
   --spacing-margin-mobile: 20px;
   --spacing-container-max: 1280px;
 
-  --beer-amber: #f59e0b;
-  --beer-amber-glow: rgba(245, 158, 11, 0.45);
+  --beer-amber: #f5c518;
+  --beer-amber-glow: rgba(245, 197, 24, 0.45);
+
+  /* Override Tailwind v4 amber color palette to be golden-yellow */
+  --color-amber-50: #fefce8;
+  --color-amber-100: #fef9c3;
+  --color-amber-200: #fef08a;
+  --color-amber-300: #fde047;
+  --color-amber-400: #facc15;
+  --color-amber-500: #f5c518;
+  --color-amber-600: #d9aa10;
+  --color-amber-700: #b3880b;
+  --color-amber-800: #8c670a;
+  --color-amber-900: #664908;
+  --color-amber-950: #332303;
 }
 
 body {
@@ -55,7 +68,7 @@ body {
 }
 
 .neon-glow {
-  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 15px rgba(245, 197, 24, 0.4);
 }
 
 .amber-pulse {
@@ -63,8 +76,8 @@ body {
 }
 
 @keyframes pulse {
-  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(245, 158, 11, 0.8)); }
-  50% { opacity: 0.7; transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(245, 158, 11, 1)); }
+  0%, 100% { opacity: 1; transform: scale(1); filter: drop-shadow(0 0 8px rgba(245, 197, 24, 0.8)); }
+  50% { opacity: 0.7; transform: scale(1.2); filter: drop-shadow(0 0 15px rgba(245, 197, 24, 1)); }
 }
 
 /* Custom Neon Pin styling for Leaflet */
@@ -255,8 +268,8 @@ body {
 /* Hover and selection states */
 .pac-item:hover,
 .pac-item.pac-selected {
-  background-color: rgba(245, 158, 11, 0.08) !important;
-  color: #fbbf24 !important;
+  background-color: rgba(245, 197, 24, 0.08) !important;
+  color: var(--color-amber-400) !important;
 }
 
 /* Search pin/marker icon - color-filtered to a custom glowing amber */
@@ -276,7 +289,7 @@ body {
 
 /* Unmatched text segment (Address metadata) */
 .pac-matched {
-  color: #fbbf24 !important; /* Highlights matching query chars in amber */
+  color: var(--color-amber-400) !important; /* Highlights matching query chars in amber */
   font-weight: 700 !important;
 }
 

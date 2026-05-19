@@ -327,7 +327,7 @@ export default function Home() {
       <header className="w-full shrink-0 h-16 glass-panel border-x-0 border-t-0 px-6 flex items-center justify-between z-[600]">
         {/* Brand details */}
         <div className="flex items-center gap-3 select-none">
-          <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(245,158,11,0.85)] font-sans animate-pulse">🍺</span>
+          <span className="text-2xl filter drop-shadow-[0_0_8px_rgba(245,197,24,0.85)] font-sans animate-pulse">🍺</span>
           <div>
             <div className="flex items-center gap-1.5">
               <h1 className="font-display text-lg font-bold text-white tracking-widest leading-none">DBDB</h1>
@@ -696,7 +696,7 @@ export default function Home() {
                     {votedAmenities.map((amenity) => (
                       <div
                         key={amenity.key}
-                        className="px-3 py-1.5 rounded-xl border border-amber-500/10 bg-amber-500/5 text-xs text-white font-medium flex items-center gap-1.5 filter drop-shadow-[0_0_4px_rgba(245,158,11,0.1)] animate-fadeIn"
+                        className="px-3 py-1.5 rounded-xl border border-amber-500/10 bg-amber-500/5 text-xs text-white font-medium flex items-center gap-1.5 filter drop-shadow-[0_0_4px_rgba(245,197,24,0.1)] animate-fadeIn"
                       >
                         <span>{amenity.label}</span>
                         <span className="text-[10px] font-extrabold text-amber-500 px-1 bg-amber-500/10 rounded-md">
@@ -820,7 +820,7 @@ export default function Home() {
                                 return review.amenities.split(',').filter(Boolean).map((tag) => (
                                   <span
                                     key={tag}
-                                    className="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500 filter drop-shadow-[0_0_2px_rgba(245,158,11,0.05)]"
+                                    className="text-[9px] font-bold tracking-wider px-2 py-0.5 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500 filter drop-shadow-[0_0_2px_rgba(245,197,24,0.05)]"
                                   >
                                     {labels[tag.trim()] || tag.trim()}
                                   </span>

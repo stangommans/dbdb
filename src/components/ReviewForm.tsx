@@ -185,7 +185,7 @@ export default function ReviewForm({
                   <svg
                     className={`w-8 h-8 sm:w-9 h-9 transition-colors duration-150 ${
                       active
-                        ? 'text-amber-500 filter drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]'
+                        ? 'text-amber-500 filter drop-shadow-[0_0_8px_rgba(245,197,24,0.5)]'
                         : 'text-neutral-800 hover:text-neutral-600'
                      }`}
                     fill="currentColor"
@@ -273,7 +273,7 @@ export default function ReviewForm({
                       className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-xl border text-[11px] sm:text-xs font-semibold transition-all active:scale-95 cursor-pointer
                         ${
                           active
-                            ? 'border-amber-500 bg-amber-500/10 text-white font-medium filter drop-shadow-[0_0_6px_rgba(245,158,11,0.25)]'
+                            ? 'border-amber-500 bg-amber-500/10 text-white font-medium filter drop-shadow-[0_0_6px_rgba(245,197,24,0.25)]'
                             : 'border-neutral-800 bg-neutral-900/20 text-neutral-400 hover:border-neutral-700 hover:text-neutral-200'
                         }`}
                     >
