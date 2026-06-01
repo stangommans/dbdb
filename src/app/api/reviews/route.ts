@@ -5,7 +5,21 @@ import { getOrCreateReviewerToken, setReviewerCookie } from '@/lib/session';
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { barId, diveScore, pricePerMl, relativePrice, murkiness, comment, photoUrl, amenities } = body;
+    const { 
+      barId, 
+      diveScore, 
+      pricePerMl, 
+      relativePrice, 
+      murkiness, 
+      comment, 
+      photoUrl, 
+      amenities,
+      vessel,
+      vesselSize,
+      vesselSizeMl,
+      purchasePrice,
+      purchaseCurrency
+    } = body;
 
     if (!barId || !diveScore) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -46,6 +60,11 @@ export async function POST(request: Request) {
         photoUrl: photoUrl || null,
         reviewerToken: reviewerUuid,
         amenities: amenities || null,
+        vessel: vessel || null,
+        vesselSize: vesselSize || null,
+        vesselSizeMl: vesselSizeMl ? parseFloat(vesselSizeMl) : null,
+        purchasePrice: purchasePrice ? parseFloat(purchasePrice) : null,
+        purchaseCurrency: purchaseCurrency || null,
       },
     });
 

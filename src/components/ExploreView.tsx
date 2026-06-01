@@ -1,5 +1,7 @@
 "use client";
 
+import { CURRENCIES, convertFromBase } from '@/lib/currency';
+
 interface Review {
   id: string;
   diveScore: number;
@@ -36,6 +38,7 @@ interface ExploreViewProps {
   bars: Bar[];
   onBarSelect: (id: string) => void;
   selectedBarId: string | null;
+  activeCurrency?: string;
 }
 
 const ATMOSPHERIC_IMGS = [
@@ -55,7 +58,7 @@ const TAG_LABELS: Record<string, string> = {
   DARTBOARD: "Dartboard"
 };
 
-export default function ExploreView({ bars, onBarSelect, selectedBarId }: ExploreViewProps) {
+export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCurrency = 'EUR' }: ExploreViewProps) {
   // Deterministic fallback image selection based on bar ID characters
   const getAtmosphericImg = (id: string, index: number) => {
     const charCodeSum = id.split("").reduce((acc, char) => acc + char.charCodeAt(0), 0);
@@ -69,7 +72,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId }: Explor
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
           Discover the Underground
         </h2>
-        <p className="text-on-surface-variant text-sm mt-1 max-w-2xl font-light">
+        <p className="text-on-surface-variant text-[18px] mt-1.5 max-w-2xl font-light">
           A handpicked bento collection of shadowy corners, neon highlights, and vintage pours. Sorted for the true urban explorer.
         </p>
       </div>
@@ -80,8 +83,8 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId }: Explor
             explore_off
           </span>
           <div>
-            <h4 className="font-display font-bold text-white">No dive bars match filters</h4>
-            <p className="text-xs text-on-surface-variant max-w-xs mt-1">
+            <h4 className="font-display font-bold text-[22px] text-white">No dive bars match filters</h4>
+            <p className="text-[18px] text-on-surface-variant max-w-xs mt-1.5">
               Try adjusting your sliders or tags to search wider neighborhoods and deeper vibes.
             </p>
           </div>
@@ -138,28 +141,33 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId }: Explor
                     className="w-full h-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                   />
                   {/* Rating Badge */}
-                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-xs font-bold font-display border border-white/10 flex items-center gap-1">
-                    <span className="text-primary text-sm">★</span>
+                  <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-[18px] font-bold font-display border border-white/10 flex items-center gap-1">
+                    <span className="text-primary text-[18px]">★</span>
                     <span className="text-white">
                       {bar.averageDiveScore ? bar.averageDiveScore.toFixed(1) : "0.0"}
                     </span>
                   </div>
 
                   {/* Absolute Price per ml index (if reviews present) */}
-                  {bar.averagePricePerMl !== null && (
-                    <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded text-[10px] font-bold text-primary font-display border border-white/5 uppercase tracking-wider">
-                      €{(bar.averagePricePerMl * 100).toFixed(1)}c / ML
-                    </div>
-                  )}
+                  {bar.averagePricePerMl !== null && (() => {
+                    const activeCurr = activeCurrency || 'EUR';
+                    const rate = convertFromBase(bar.averagePricePerMl, activeCurr);
+                    const symbol = CURRENCIES.find(c => c.code === activeCurr)?.symbol || '€';
+                    return (
+                      <div className="absolute bottom-3 left-3 bg-black/75 backdrop-blur-md px-3 py-1 rounded text-[18px] font-bold text-primary font-display border border-white/5 uppercase tracking-wider">
+                        {symbol}{(rate * 100).toFixed(1)}c / ML
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Details Body */}
                 <div className="p-5 space-y-3.5">
                   <div>
-                    <h3 className="font-display text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-1">
+                    <h3 className="font-display text-2xl font-bold text-white group-hover:text-primary transition-colors line-clamp-1 leading-snug">
                       {bar.name}
                     </h3>
-                    <p className="text-xs text-on-surface-variant font-light line-clamp-1 mt-0.5">
+                    <p className="text-[18px] text-on-surface-variant font-normal line-clamp-1 mt-1.5 leading-snug">
                       {bar.address}
                     </p>
                   </div>
@@ -167,19 +175,19 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId }: Explor
                   {/* Badges container */}
                   <div className="flex flex-wrap gap-2 items-center">
                     {priceTag && (
-                      <span className="px-2 py-0.5 bg-white/5 rounded text-[10px] text-primary font-bold uppercase tracking-wider">
+                      <span className="px-2.5 py-1 bg-white/5 rounded text-[18px] text-primary font-bold uppercase tracking-wider">
                         {priceTag}
                       </span>
                     )}
                     {murkLabel && (
-                      <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase border tracking-wider ${murkColor}`}>
+                      <span className={`px-3 py-1 rounded text-[18px] font-bold uppercase border tracking-wider ${murkColor}`}>
                         {murkLabel}
                       </span>
                     )}
                     {amenitiesList.slice(0, 2).map((tag) => (
                       <span
                         key={tag}
-                        className="px-2.5 py-0.5 bg-surface-container-high border border-white/5 text-on-surface-variant rounded text-[10px] font-bold uppercase tracking-wider"
+                        className="px-3 py-1 bg-surface-container-high border border-white/5 text-on-surface-variant rounded text-[18px] font-bold uppercase tracking-wider"
                       >
                         {TAG_LABELS[tag]}
                       </span>
@@ -187,10 +195,10 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId }: Explor
                   </div>
 
                   {/* Footer details */}
-                  <div className="pt-3.5 border-t border-white/5 flex justify-between items-center text-[10px] font-bold text-on-surface-variant tracking-widest uppercase">
+                  <div className="pt-3.5 border-t border-white/5 flex justify-between items-center text-[18px] font-bold text-on-surface-variant tracking-widest uppercase">
                     <span>{bar.reviewCount} Review{bar.reviewCount === 1 ? "" : "s"}</span>
                     <span className="text-primary group-hover:translate-x-1 transition-transform flex items-center gap-0.5">
-                      EXPLORE <span className="material-symbols-outlined text-[12px]">chevron_right</span>
+                      EXPLORE <span className="material-symbols-outlined text-[18px]">chevron_right</span>
                     </span>
                   </div>
                 </div>

@@ -78,26 +78,26 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
           My Stash
         </h2>
-        <p className="text-on-surface-variant text-sm mt-1 max-w-2xl font-light">
+        <p className="text-on-surface-variant text-[18px] mt-1.5 max-w-2xl font-light">
           Your personal collection of dimly lit retreats and legendary pours. Persistent, client-private, and curated for the late nights.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <div className="md:col-span-3 flex flex-col gap-4">
+        <div className="md:col-span-4 flex flex-col gap-4">
           <div className="glass-panel p-6 rounded-2xl flex flex-col gap-4">
-            <p className="font-display text-xs font-bold text-primary tracking-widest uppercase">
+            <p className="font-display text-[18px] font-bold text-primary tracking-widest uppercase">
               Collection Info
             </p>
             <div className="space-y-4">
               <div className="flex justify-between items-baseline border-b border-white/5 pb-3">
-                <span className="text-xs text-on-surface-variant font-light">Saved Bars</span>
+                <span className="text-[18px] text-on-surface-variant font-light">Saved Bars</span>
                 <span className="font-display text-2xl font-bold text-primary leading-none">
                   {savedBars.length}
                 </span>
               </div>
               <div className="flex justify-between items-baseline">
-                <span className="text-xs text-on-surface-variant font-light">Neighborhoods</span>
+                <span className="text-[18px] text-on-surface-variant font-light">Neighborhoods</span>
                 <span className="font-display text-2xl font-bold text-primary leading-none">
                   {uniqueNeighborhoods}
                 </span>
@@ -106,15 +106,15 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
           </div>
         </div>
 
-        <div className="md:col-span-9 space-y-4">
+        <div className="md:col-span-8 space-y-4">
           {savedBars.length === 0 ? (
             <div className="flex flex-col items-center justify-center text-center p-12 border border-white/5 bg-surface-container-low rounded-2xl space-y-4">
               <span className="material-symbols-outlined text-[48px] text-primary/45 animate-pulse" style={{ fontVariationSettings: "'FILL' 1" }}>
                 favorite
               </span>
               <div>
-                <h4 className="font-display font-bold text-white">Your stash is dry!</h4>
-                <p className="text-xs text-on-surface-variant max-w-xs mt-1">
+                <h4 className="font-display font-bold text-[22px] text-white">Your stash is dry!</h4>
+                <p className="text-[18px] text-on-surface-variant max-w-xs mt-1.5">
                   Explore the Leaflet map or discovery lists, click on a bar, and bookmark it to create your private collection.
                 </p>
               </div>
@@ -144,29 +144,25 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
                     <img
                       src={heroImage}
                       alt={bar.name}
-                      className="h-full w-full object-cover grayscale-[0.35] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                      className="h-full w-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                     />
                   </div>
 
                   <div className="ml-4 md:ml-6 flex-grow">
                     <div className="flex justify-between items-start">
                       <div onClick={() => onBarSelect(bar.id)} className="cursor-pointer">
-                        <h3 className="font-display text-base md:text-lg font-bold text-white group-hover:text-primary transition-colors line-clamp-1 leading-snug">
+                        <h3 className="font-display text-xl md:text-2xl font-bold text-white group-hover:text-primary transition-colors line-clamp-1 leading-snug">
                           {bar.name}
                         </h3>
-                        <div className="flex items-center gap-2 mt-1 text-xs text-on-surface-variant font-light">
-                          <span className="flex items-center gap-0.5">
-                            <span className="material-symbols-outlined text-[14px]">location_on</span>
-                            {bar.address.split(",")[1]?.trim() || bar.address.split(",")[0]?.trim()}
-                          </span>
+                        <p className="text-[18px] text-on-surface-variant font-normal mt-1.5 line-clamp-1 leading-snug">
+                          {bar.address}
+                        </p>
+                        <div className="flex items-center gap-2.5 mt-2.5 text-[18px] text-on-surface-variant font-bold uppercase tracking-wider">
                           {priceTag && (
-                            <>
-                              <span className="text-white/10">•</span>
-                              <span className="text-primary font-bold">{priceTag}</span>
-                            </>
+                            <span className="text-primary">{priceTag}</span>
                           )}
-                          <span className="text-white/10">•</span>
-                          <span className="text-primary font-bold flex items-center gap-0.5">
+                          {priceTag && <span className="text-white/10">•</span>}
+                          <span className="text-primary flex items-center gap-0.5">
                             ★ {bar.averageDiveScore ? bar.averageDiveScore.toFixed(1) : "0.0"}
                           </span>
                         </div>
@@ -177,10 +173,10 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
                           e.stopPropagation();
                           onRemoveBar(bar.id);
                         }}
-                        className="text-primary drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] hover:text-on-surface-variant/40 active:scale-90 transition-all p-1.5 hover:bg-white/5 rounded-full cursor-pointer"
+                        className="text-primary drop-shadow-[0_0_8px_rgba(245,158,11,0.5)] hover:text-on-surface-variant/40 active:scale-95 transition-all w-12 h-12 flex items-center justify-center hover:bg-white/5 rounded-full cursor-pointer border border-white/5"
                       >
                         <span
-                          className="material-symbols-outlined text-[22px]"
+                          className="material-symbols-outlined text-[26px]"
                           style={{ fontVariationSettings: "'FILL' 1" }}
                         >
                           favorite
@@ -188,11 +184,11 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
                       </button>
                     </div>
 
-                    <div className="mt-3.5 hidden md:flex gap-2">
+                    <div className="mt-3.5 hidden md:flex flex-wrap gap-2">
                       {amenitiesList.slice(0, 3).map((tag) => (
                         <span
                           key={tag}
-                          className="text-[10px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded bg-white/5 border border-white/5 text-on-surface-variant"
+                          className="text-[18px] font-bold tracking-wider uppercase px-2.5 py-0.5 rounded bg-white/5 border border-white/5 text-on-surface-variant"
                         >
                           {TAG_LABELS[tag]}
                         </span>

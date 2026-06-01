@@ -29,12 +29,17 @@ model Review {
   diveScore     Int      // 1 to 5 scale
   
   // Optional Detailed Ratings
-  pricePerMl    Float?   // Absolute price rating
-  relativePrice Float?   // 1 to 5 regional price rating
-  murkiness     String?  // "MURKY" | "AVERAGE" | "ACTUALLY_NICE"
-  comment       String?  // Optional text review
-  photoUrl      String?  // Path to local public upload
-  amenities     String?  // Comma-separated list of tags (e.g. "POOL_TABLE,CASH_ONLY")
+  pricePerMl       Float?   // Stored in base currency (EUR) for aggregation
+  relativePrice    Float?   // 1 to 5 regional price rating
+  murkiness        String?  // "MURKY" | "AVERAGE" | "ACTUALLY_NICE"
+  comment          String?  // Optional text review
+  photoUrl         String?  // Path to local public upload
+  amenities        String?  // Comma-separated list of tags (e.g. "POOL_TABLE,CASH_ONLY")
+  vessel           String?  // "Can", "Glass", "Bottle", "Pint", "Other"
+  vesselSize       String?  // e.g. "330ml", "500ml", "other"
+  vesselSizeMl     Float?   // numeric ml size (e.g. 330)
+  purchasePrice    Float?   // original price paid
+  purchaseCurrency String?  // currency code (e.g. "EUR", "USD", "GBP")
   
   // Cryptographic signature matching user's cookie to prevent double votes and allow editing
   reviewerToken String   

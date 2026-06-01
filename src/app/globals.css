@@ -184,16 +184,16 @@ body {
 .popup-title {
   margin: 0 !important;
   font-family: inherit;
-  font-size: 15px !important;
-  font-weight: 600 !important;
+  font-size: 18px !important;
+  font-weight: 700 !important;
   letter-spacing: -0.01em;
   color: #ffffff !important;
 }
 
 .popup-address {
   margin: 0 !important;
-  font-size: 12px !important;
-  font-weight: 300;
+  font-size: 18px !important;
+  font-weight: 400;
   color: #a3a3a3 !important;
   line-height: 1.3;
 }
@@ -203,16 +203,17 @@ body {
   align-items: center;
   gap: 12px;
   margin-top: 6px;
-  font-size: 12px !important;
+  font-size: 18px !important;
 }
 
 .popup-rating {
-  font-weight: 600 !important;
+  font-weight: 700 !important;
   color: var(--beer-amber) !important;
 }
 
 .popup-reviews {
   color: #a3a3a3 !important;
+  font-weight: 600 !important;
 }
 
 /* Glassmorphism drawer panel scrollbar specs */
@@ -251,12 +252,12 @@ body {
 /* Individual list rows */
 .pac-item {
   color: #d4d4d4 !important;
-  padding: 10px 16px !important;
+  padding: 12px 16px !important;
   border-top: 1px solid rgba(63, 63, 70, 0.3) !important;
   cursor: pointer !important;
   display: flex !important;
   align-items: center !important;
-  font-size: 13px !important;
+  font-size: 18px !important;
   transition: all 120ms ease-in-out !important;
 }
 
@@ -282,7 +283,7 @@ body {
 /* Primary matched text segment (Bar name) */
 .pac-item-query {
   color: #ffffff !important;
-  font-size: 14px !important;
+  font-size: 18px !important;
   font-weight: 600 !important;
   padding-right: 4px !important;
 }
