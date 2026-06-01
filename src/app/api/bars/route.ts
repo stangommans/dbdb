@@ -30,38 +30,20 @@ export async function GET() {
           reviewCount: 0,
           averageDiveScore: 0,
           averagePricePerMl: null,
-          averageRelativePrice: null,
-          murkinessStats: { MURKY: 0, AVERAGE: 0, ACTUALLY_NICE: 0 },
           reviews: [],
         };
       }
 
       let totalDiveScore = 0;
-      let totalRelativePrice = 0;
-      let relativePriceCount = 0;
       let totalPricePerMl = 0;
       let pricePerMlCount = 0;
       
-      const murkinessStats = { MURKY: 0, AVERAGE: 0, ACTUALLY_NICE: 0 };
-
       bar.reviews.forEach((review) => {
         totalDiveScore += review.diveScore;
-        
-        if (review.relativePrice !== null && review.relativePrice !== undefined) {
-          totalRelativePrice += review.relativePrice;
-          relativePriceCount++;
-        }
         
         if (review.pricePerMl !== null && review.pricePerMl !== undefined) {
           totalPricePerMl += review.pricePerMl;
           pricePerMlCount++;
-        }
-        
-        if (review.murkiness) {
-          const key = review.murkiness as keyof typeof murkinessStats;
-          if (murkinessStats[key] !== undefined) {
-            murkinessStats[key]++;
-          }
         }
       });
 
@@ -78,8 +60,6 @@ export async function GET() {
         reviewCount,
         averageDiveScore: totalDiveScore / reviewCount,
         averagePricePerMl: pricePerMlCount > 0 ? totalPricePerMl / pricePerMlCount : null,
-        averageRelativePrice: relativePriceCount > 0 ? totalRelativePrice / relativePriceCount : null,
-        murkinessStats,
         reviews: bar.reviews,
       };
     });

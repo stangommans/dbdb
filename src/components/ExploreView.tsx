@@ -6,8 +6,6 @@ interface Review {
   id: string;
   diveScore: number;
   pricePerMl: number | null;
-  relativePrice: number | null;
-  murkiness: string | null;
   comment: string | null;
   photoUrl: string | null;
   reviewerToken: string;
@@ -25,12 +23,6 @@ interface Bar {
   reviewCount: number;
   averageDiveScore: number;
   averagePricePerMl: number | null;
-  averageRelativePrice: number | null;
-  murkinessStats: {
-    MURKY: number;
-    AVERAGE: number;
-    ACTUALLY_NICE: number;
-  };
   reviews: Review[];
 }
 
@@ -66,7 +58,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
   };
 
   return (
-    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Intro section */}
       <div className="mb-8">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
@@ -98,28 +90,6 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
             // Check if any review has an uploaded photo
             const uploadedPhoto = bar.reviews.find((r) => r.photoUrl)?.photoUrl;
             const heroImage = uploadedPhoto || getAtmosphericImg(bar.id, barIdx);
-
-            // Dominant murkiness calculate
-            let murkLabel = "";
-            let murkColor = "";
-            if (hasReviews) {
-              const stats = bar.murkinessStats;
-              if (stats.MURKY >= stats.AVERAGE && stats.MURKY >= stats.ACTUALLY_NICE) {
-                murkLabel = "🟢 Murky";
-                murkColor = "bg-[#84cc16]/10 text-[#84cc16] border-[#84cc16]/20";
-              } else if (stats.AVERAGE >= stats.MURKY && stats.AVERAGE >= stats.ACTUALLY_NICE) {
-                murkLabel = "🟡 Average";
-                murkColor = "bg-[#f59e0b]/10 text-[#f59e0b] border-[#f59e0b]/20";
-              } else {
-                murkLabel = "🔵 Actually Nice";
-                murkColor = "bg-[#3b82f6]/10 text-[#3b82f6] border-[#3b82f6]/20";
-              }
-            }
-
-            // Price indicators
-            const priceTag = bar.averageRelativePrice 
-              ? "$".repeat(Math.round(bar.averageRelativePrice)) 
-              : null;
 
             // Render top 2 amenities tags
             const amenitiesList = bar.amenities 
@@ -174,16 +144,6 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
 
                   {/* Badges container */}
                   <div className="flex flex-wrap gap-2 items-center">
-                    {priceTag && (
-                      <span className="px-2.5 py-1 bg-white/5 rounded text-[18px] text-primary font-bold uppercase tracking-wider">
-                        {priceTag}
-                      </span>
-                    )}
-                    {murkLabel && (
-                      <span className={`px-3 py-1 rounded text-[18px] font-bold uppercase border tracking-wider ${murkColor}`}>
-                        {murkLabel}
-                      </span>
-                    )}
                     {amenitiesList.slice(0, 2).map((tag) => (
                       <span
                         key={tag}

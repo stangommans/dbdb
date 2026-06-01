@@ -6,8 +6,6 @@ interface Review {
   id: string;
   diveScore: number;
   pricePerMl: number | null;
-  relativePrice: number | null;
-  murkiness: string | null;
   comment: string | null;
   photoUrl: string | null;
   reviewerToken: string;
@@ -89,7 +87,7 @@ export default function ProfileView({
   };
 
   return (
-    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Intro section */}
       <div className="mb-8">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
@@ -219,7 +217,7 @@ export default function ProfileView({
               Contribution Stats
             </p>
 
-            <div className="grid grid-cols-3 md:grid-cols-1 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-4">
               {/* Stat 1 */}
               <div className="bg-surface-container-low border border-white/5 p-4 rounded-xl text-center md:text-left flex flex-col justify-between">
                 <span className="text-[18px] text-on-surface-variant font-bold tracking-widest uppercase">

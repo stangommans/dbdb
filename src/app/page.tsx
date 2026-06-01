@@ -26,8 +26,6 @@ interface Review {
   id: string;
   diveScore: number;
   pricePerMl: number | null;
-  relativePrice: number | null;
-  murkiness: string | null;
   comment: string | null;
   photoUrl: string | null;
   reviewerToken: string;
@@ -51,12 +49,6 @@ interface Bar {
   reviewCount: number;
   averageDiveScore: number;
   averagePricePerMl: number | null;
-  averageRelativePrice: number | null;
-  murkinessStats: {
-    MURKY: number;
-    AVERAGE: number;
-    ACTUALLY_NICE: number;
-  };
   reviews: Review[];
 }
 
@@ -81,7 +73,6 @@ export default function Home() {
 
   // Real-time Filters Overlay states
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [priceRange, setPriceRange] = useState<number>(5);
   const [minRating, setMinRating] = useState<number>(0);
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
 
@@ -287,11 +278,6 @@ export default function Home() {
 
       if (!matchesSearch) return false;
 
-      // 2. Relative Price Limit ($)
-      if (bar.averageRelativePrice !== null && bar.averageRelativePrice > priceRange) {
-        return false;
-      }
-
       // 3. Minimum Dive Rating (★)
       if (bar.averageDiveScore < minRating) {
         return false;
@@ -321,7 +307,6 @@ export default function Home() {
 
   // Active filter items counter
   let activeFilterCount = 0;
-  if (priceRange < 5) activeFilterCount++;
   if (minRating > 0) activeFilterCount++;
   if (selectedAmenities.length > 0) activeFilterCount += selectedAmenities.length;
 
@@ -339,12 +324,7 @@ export default function Home() {
     ? convertFromBase(globalAvgPricePerMl * 330, activeCurrency)
     : null;
 
-  // Calculate human-friendly price indicators
-  const renderRelativePriceTag = (score: number | null) => {
-    if (score === null || score === undefined) return 'N/A';
-    const rounded = Math.round(score);
-    return '$'.repeat(rounded);
-  };
+
 
   return (
     <main className="relative w-screen h-[100dvh] bg-[#131313] text-[#e5e2e1] flex flex-col overflow-hidden font-sans">
@@ -478,8 +458,8 @@ export default function Home() {
           {/* Floating Sidebar overlays (Desktop/Tablet list overlay, slide-over drawer on mobile) */}
           <div className={`absolute left-6 top-6 bottom-6 z-[450] w-[450px] max-w-[calc(100vw-48px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300 transform translate-z-0
             ${isMobileListOpen
-              ? 'max-md:left-4 max-md:top-4 max-md:bottom-4 max-md:translate-x-0 max-md:opacity-100'
-              : 'max-md:left-4 max-md:top-4 max-md:bottom-4 max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
+              ? 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-0 max-md:opacity-100'
+              : 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
             }
           `}>
             {/* Quick stats and sort dropdown */}
@@ -546,9 +526,7 @@ export default function Home() {
               ) : (
                 filteredAndSortedBars.map((bar) => {
                   const active = bar.id === selectedBarId;
-                  const priceTag = bar.averageRelativePrice
-                    ? "$".repeat(Math.round(bar.averageRelativePrice))
-                    : null;
+                  const priceTag = null;
 
                   return (
                     <div
@@ -637,7 +615,7 @@ export default function Home() {
         {selectedBar && (
           <div
             className="absolute right-6 top-6 bottom-6 z-[550] w-[460px] max-w-[calc(100vw-32px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300
-              max-md:left-0 max-md:right-0 max-md:top-auto max-md:bottom-0 max-md:w-full max-md:h-[65vh] max-md:rounded-t-2xl max-md:border-x-0 max-md:border-b-0 max-md:border-t transform translate-z-0"
+              max-md:left-4 max-md:right-4 max-md:top-0 max-md:bottom-0 max-md:w-auto max-md:h-[100dvh] transform translate-z-0"
           >
             {/* Drawer Header detail */}
             <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between flex-shrink-0 bg-surface-container-lowest/20 gap-3">
@@ -679,12 +657,12 @@ export default function Home() {
             </div>
 
             {/* Scrollable details panel */}
-            <div className="flex-grow overflow-y-auto p-6 space-y-6 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto p-6 pb-20 md:pb-6 space-y-6 custom-scrollbar">
 
               {/* Aggregated widgets grid */}
               <div className="grid grid-cols-2 gap-4">
                 {/* Star rating panel */}
-                <div className="p-5 bg-surface-container-low border border-white/5 rounded-2xl flex flex-col justify-between min-h-[140px]">
+                <div className="col-span-2 p-5 bg-surface-container-low border border-white/5 rounded-2xl flex flex-col justify-between min-h-[140px]">
                   <span className="text-[18px] font-bold uppercase tracking-widest text-primary">Dive Score</span>
                   <div className="mt-2.5 flex items-baseline gap-1">
                     <span className="font-display text-4xl font-black text-white">
@@ -693,42 +671,6 @@ export default function Home() {
                     <span className="text-[18px] text-on-surface-variant font-medium">/ 5.0</span>
                   </div>
                   <div className="text-[18px] text-on-surface-variant mt-2 font-bold uppercase tracking-wider">Based on {selectedBar.reviewCount} rating{selectedBar.reviewCount === 1 ? '' : 's'}</div>
-                </div>
-
-                {/* Relative price panel */}
-                <div className="p-5 bg-surface-container-low border border-white/5 rounded-2xl flex flex-col justify-between min-h-[140px]">
-                  <span className="text-[18px] font-bold uppercase tracking-widest text-primary">Price Index</span>
-                  <div className="mt-2.5 text-3xl font-black text-white tracking-widest font-display">
-                    {selectedBar.averageRelativePrice !== null ? renderRelativePriceTag(selectedBar.averageRelativePrice) : 'N/A'}
-                  </div>
-                  <span className="text-[18px] text-on-surface-variant mt-2 font-bold uppercase tracking-wider">
-                    {selectedBar.averageRelativePrice !== null
-                      ? selectedBar.averageRelativePrice <= 2
-                        ? '🟢 Inexpensive'
-                        : selectedBar.averageRelativePrice >= 4
-                          ? '🔴 Pricier Pub'
-                          : '🟡 Average Pricing'
-                      : 'No price ratings'}
-                  </span>
-                </div>
-
-                {/* Atmospheric murkiness metrics */}
-                <div className="col-span-2 p-5 bg-surface-container-low border border-white/5 rounded-2xl space-y-4">
-                  <span className="block text-[18px] font-bold uppercase tracking-widest text-primary">Atmospheric Murkiness</span>
-                  <div className="grid grid-cols-3 gap-3 text-center text-[18px] font-bold uppercase tracking-wider">
-                    <div className="bg-surface-container-lowest border border-white/5 p-3.5 rounded-2xl">
-                      <span className="text-on-surface-variant block mb-1.5 font-bold">🟢 Murky</span>
-                      <span className="text-white text-[18px] font-display font-extrabold">{selectedBar.murkinessStats.MURKY}</span>
-                    </div>
-                    <div className="bg-surface-container-lowest border border-white/5 p-3.5 rounded-2xl">
-                      <span className="text-on-surface-variant block mb-1.5 font-bold">🟡 Average</span>
-                      <span className="text-white text-[18px] font-display font-extrabold">{selectedBar.murkinessStats.AVERAGE}</span>
-                    </div>
-                    <div className="bg-surface-container-lowest border border-white/5 p-3.5 rounded-2xl">
-                      <span className="text-on-surface-variant block mb-1.5 font-bold">🔵 Nice</span>
-                      <span className="text-white text-[18px] font-display font-extrabold">{selectedBar.murkinessStats.ACTUALLY_NICE}</span>
-                    </div>
-                  </div>
                 </div>
 
                 {/* Standard drink ML pricing details */}
@@ -861,21 +803,9 @@ export default function Home() {
                           </div>
 
                           {/* Dynamic metadata filters tags */}
-                          {(review.murkiness || review.relativePrice || review.amenities) && (
+                          {review.amenities && (
                             <div className="flex flex-wrap gap-2.5 pt-1">
-                              {review.murkiness && (
-                                <span className="text-[18px] font-bold tracking-wider uppercase px-3.5 py-2 rounded bg-surface-container-lowest border border-white/5 text-on-surface-variant">
-                                  {review.murkiness === 'MURKY' && '🟢 Murky'}
-                                  {review.murkiness === 'AVERAGE' && '🟡 Average'}
-                                  {review.murkiness === 'ACTUALLY_NICE' && '🔵 Nice'}
-                                </span>
-                              )}
-                              {review.relativePrice && (
-                                <span className="text-[18px] font-bold tracking-wider uppercase px-3.5 py-2 rounded bg-surface-container-lowest border border-white/5 text-primary">
-                                  {renderRelativePriceTag(review.relativePrice)}
-                                </span>
-                              )}
-                              {review.amenities && (() => {
+                              {(() => {
                                 const labels: Record<string, string> = {
                                   CASH_ONLY: "💵 Cash Only",
                                   POOL_TABLE: "🎱 Pool Table",
@@ -963,8 +893,6 @@ export default function Home() {
         onClose={() => setIsFilterOpen(false)}
         searchQuery={searchQuery}
         setSearchQuery={setSearchQuery}
-        priceRange={priceRange}
-        setPriceRange={setPriceRange}
         minRating={minRating}
         setMinRating={setMinRating}
         selectedAmenities={selectedAmenities}
@@ -986,7 +914,7 @@ export default function Home() {
       {/* 6. WRITE / EDIT DIVE REVIEW SHEET */}
       {isReviewOpen && selectedBar && (
         <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-[480px] max-h-[85vh] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="w-full max-w-[480px] max-h-[calc(100dvh-32px)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <ReviewForm
               barId={selectedBar.id}
               barName={selectedBar.name}
@@ -1021,7 +949,7 @@ export default function Home() {
       )}
 
       {/* UNIFIED FLOATING BOTTOM NAVIGATION BAR */}
-      <nav className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[450] flex items-center justify-around md:justify-center gap-1 md:gap-3 bg-[#181818]/90 backdrop-blur-md border border-white/10 rounded-3xl md:rounded-full p-2 md:p-1.5 shadow-2xl shadow-black/90 w-[calc(100vw-32px)] md:w-auto min-w-[320px] md:min-w-[480px] transition-all duration-300 transform translate-z-0
+      <nav className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[450] flex items-center justify-around md:justify-center gap-1 md:gap-3 bg-[#181818]/90 backdrop-blur-md border border-white/10 rounded-3xl md:rounded-full p-2 md:p-1.5 shadow-2xl shadow-black/90 w-[calc(100vw-24px)] md:w-auto min-w-[320px] md:min-w-[480px] max-md:min-w-0 transition-all duration-300 transform translate-z-0
         ${(isMobileListOpen || selectedBarId) ? 'max-md:translate-y-28 max-md:opacity-0 max-md:pointer-events-none' : 'max-md:translate-y-0 max-md:opacity-100'}`}
       >
         {[
@@ -1035,13 +963,13 @@ export default function Home() {
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
-              className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-3 md:px-5 py-2 md:py-2.5 rounded-2xl md:rounded-full transition-all cursor-pointer select-none active:scale-95 flex-1 md:flex-initial min-h-[52px] md:min-h-[44px]
+              className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-1.5 md:px-5 py-2 md:py-2.5 rounded-2xl md:rounded-full transition-all cursor-pointer select-none active:scale-95 flex-1 md:flex-initial min-h-[52px] md:min-h-[44px]
                 ${active
                   ? 'bg-primary text-neutral-950 font-black shadow-lg shadow-amber-500/10'
                   : 'text-neutral-400 hover:text-white'}`}
             >
               <span className="material-symbols-outlined text-[24px] md:text-[22px]" style={{ fontVariationSettings: ` 'FILL' ${active ? '1' : '0'} ` }}>{tab.icon}</span>
-              <span className="font-display text-[16px] md:text-[18px] font-bold uppercase tracking-wider leading-none">{tab.label}</span>
+              <span className="font-display text-[11px] md:text-[18px] font-bold uppercase tracking-wider leading-none">{tab.label}</span>
             </button>
           );
         })}

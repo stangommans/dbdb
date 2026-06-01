@@ -115,10 +115,14 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
         </div>
       `;
 
-      marker.bindPopup(popupContent, {
-        className: 'custom-leaflet-popup',
-        closeButton: false
-      });
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+
+      if (!isMobile) {
+        marker.bindPopup(popupContent, {
+          className: 'custom-leaflet-popup',
+          closeButton: false
+        });
+      }
 
       marker.on('click', () => {
         onBarSelect(bar.id);
@@ -143,7 +147,11 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     if (marker) {
       const latLng = marker.getLatLng();
       map.setView(latLng, 16, { animate: true });
-      marker.openPopup();
+      
+      const isMobile = typeof window !== 'undefined' && window.innerWidth < 768;
+      if (!isMobile) {
+        marker.openPopup();
+      }
     }
   }, [selectedBarId]);
 

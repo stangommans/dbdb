@@ -4,8 +4,6 @@ interface Review {
   id: string;
   diveScore: number;
   pricePerMl: number | null;
-  relativePrice: number | null;
-  murkiness: string | null;
   comment: string | null;
   photoUrl: string | null;
   reviewerToken: string;
@@ -23,12 +21,6 @@ interface Bar {
   reviewCount: number;
   averageDiveScore: number;
   averagePricePerMl: number | null;
-  averageRelativePrice: number | null;
-  murkinessStats: {
-    MURKY: number;
-    AVERAGE: number;
-    ACTUALLY_NICE: number;
-  };
   reviews: Review[];
 }
 
@@ -73,7 +65,7 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
   ).length;
 
   return (
-    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop py-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       <div className="mb-8">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
           My Stash
@@ -124,10 +116,6 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
               const uploadedPhoto = bar.reviews.find((r) => r.photoUrl)?.photoUrl;
               const heroImage = uploadedPhoto || getAtmosphericImg(bar.id, barIdx);
 
-              const priceTag = bar.averageRelativePrice
-                ? "$".repeat(Math.round(bar.averageRelativePrice))
-                : null;
-
               const amenitiesList = bar.amenities
                 ? bar.amenities.split(",").filter((tag) => TAG_LABELS[tag])
                 : [];
@@ -158,10 +146,6 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
                           {bar.address}
                         </p>
                         <div className="flex items-center gap-2.5 mt-2.5 text-[18px] text-on-surface-variant font-bold uppercase tracking-wider">
-                          {priceTag && (
-                            <span className="text-primary">{priceTag}</span>
-                          )}
-                          {priceTag && <span className="text-white/10">•</span>}
                           <span className="text-primary flex items-center gap-0.5">
                             ★ {bar.averageDiveScore ? bar.averageDiveScore.toFixed(1) : "0.0"}
                           </span>

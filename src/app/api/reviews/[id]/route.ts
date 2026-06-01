@@ -14,8 +14,6 @@ export async function PUT(
     const { 
       diveScore, 
       pricePerMl, 
-      relativePrice, 
-      murkiness, 
       comment, 
       photoUrl, 
       amenities,
@@ -58,8 +56,6 @@ export async function PUT(
       data: {
         diveScore: scoreNum,
         pricePerMl: pricePerMl ? parseFloat(pricePerMl) : null,
-        relativePrice: relativePrice ? parseInt(relativePrice) : null,
-        murkiness: murkiness || null,
         comment: comment || null,
         photoUrl: photoUrl || null,
         amenities: amenities || null,

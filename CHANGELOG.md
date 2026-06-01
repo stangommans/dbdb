@@ -2,6 +2,16 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.2.0] - 2026-06-01
+
+### Removed
+- **Deprecated Metrics**: Completely removed `relativePrice` and `murkiness` metrics from Prisma database schema, API route handlers (`/api/bars`, `/api/reviews`, `/api/reviews/[id]`), and database logic.
+- **Atmospheric Murkiness and Price widgets**: Purged the corresponding visual components, sliders, and accordion toggles from the Review Form, Details Drawer, Stash View, Explore View, Profile View, and Filter Overlay.
+
+### Changed
+- **Filter Layout Labels**: Fixed a layout label typo inside the Filter settings overlay where the Rating filter incorrectly read "Any Murkiness" instead of "Any Score".
+- **Metadata Streamlining**: Updated SEO meta descriptions in layout templates to reflect the new simplified metric structure.
+
 ## [1.1.0] - 2026-06-01
 
 ### Added

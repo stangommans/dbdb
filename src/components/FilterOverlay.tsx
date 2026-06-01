@@ -8,8 +8,6 @@ interface FilterOverlayProps {
   onClose: () => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
-  priceRange: number;
-  setPriceRange: (price: number) => void;
   minRating: number;
   setMinRating: (rating: number) => void;
   selectedAmenities: string[];
@@ -34,8 +32,6 @@ export default function FilterOverlay({
   onClose,
   searchQuery,
   setSearchQuery,
-  priceRange,
-  setPriceRange,
   minRating,
   setMinRating,
   selectedAmenities,
@@ -54,7 +50,6 @@ export default function FilterOverlay({
 
   const clearFilters = () => {
     setSearchQuery("");
-    setPriceRange(5);
     setMinRating(0);
     setSelectedAmenities([]);
   };
@@ -65,7 +60,7 @@ export default function FilterOverlay({
     <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
       {/* Sliding Sheet */}
       <div 
-        className="w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-white/10"
+        className="w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-white/10 flex flex-col max-h-[calc(100dvh-32px)]"
         role="dialog"
         aria-modal="true"
       >
@@ -88,7 +83,7 @@ export default function FilterOverlay({
         </div>
 
         {/* Filters Scrollable Content */}
-        <div className="p-8 space-y-8 max-h-[60vh] overflow-y-auto custom-scrollbar">
+        <div className="p-6 space-y-6 md:p-8 md:space-y-8 flex-1 overflow-y-auto custom-scrollbar">
           {/* Search bar segment */}
           <div className="space-y-2">
             <label className="block font-display text-[18px] font-bold text-primary tracking-widest uppercase mb-1">
@@ -138,33 +133,6 @@ export default function FilterOverlay({
             </div>
           </div>
 
-          {/* Price index slider */}
-          <div className="space-y-3">
-            <div className="flex justify-between items-center">
-              <label className="font-display text-[18px] font-bold text-primary tracking-widest uppercase">
-                Maximum Price Index
-              </label>
-              <span className="font-display text-[20px] font-bold text-white">
-                {"$".repeat(priceRange) || "N/A"}
-              </span>
-            </div>
-            <div className="py-2">
-              <input
-                type="range"
-                min="1"
-                max="5"
-                step="1"
-                value={priceRange}
-                onChange={(e) => setPriceRange(parseInt(e.target.value))}
-                className="w-full accent-primary-container bg-surface-container-high h-2 rounded-lg appearance-none cursor-pointer"
-              />
-            </div>
-            <div className="flex justify-between text-[18px] text-on-surface-variant font-bold tracking-tight uppercase px-1">
-              <span>Dirt Cheap</span>
-              <span>Ultra Premium</span>
-            </div>
-          </div>
-
           {/* Rating filter slider */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
@@ -187,7 +155,7 @@ export default function FilterOverlay({
               />
             </div>
             <div className="flex justify-between text-[18px] text-on-surface-variant font-bold tracking-tight uppercase px-1">
-              <span>Any Murkiness</span>
+              <span>Any Score</span>
               <span>Legendary (5.0)</span>
             </div>
           </div>
