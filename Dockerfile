@@ -1,5 +1,6 @@
 # 1. Base Node Alpine Setup
 FROM node:20-alpine AS base
+RUN npm install -g npm@latest
 
 # 2. Production Dependencies Stage
 FROM base AS deps
@@ -11,6 +12,7 @@ RUN npm ci
 
 # 3. Production Builder Stage
 FROM base AS builder
+RUN apk add --no-cache git
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
