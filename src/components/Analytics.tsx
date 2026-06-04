@@ -11,40 +11,57 @@ function AnalyticsTracker() {
   const trackerInstance = useRef<ackeeTracker.TrackerInstance | null>(null);
 
   useEffect(() => {
-    const server = process.env.NEXT_PUBLIC_ACKEE_SERVER;
-    const domainId = process.env.NEXT_PUBLIC_ACKEE_DOMAIN_ID;
+    let isMounted = true;
 
-    console.log("Ackee Tracker Init Info:", { server, domainId });
+    const fetchConfigAndInit = async () => {
+      try {
+        const res = await fetch("/api/analytics-config");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        const data = await res.json();
+        
+        if (!isMounted) return;
 
-    if (!server || !domainId) {
-      console.warn("Ackee Tracker: Missing server URL or Domain ID environment variables.");
-      return;
-    }
+        const server = data.server;
+        const domainId = data.domainId;
 
-    if (!trackerInstance.current) {
-      console.log("Ackee Tracker: Creating instance for", server);
-      trackerInstance.current = ackeeTracker.create(server, {
-        detailed: true,
-        ignoreLocalhost: false,
-      });
-    }
+        console.log("Ackee Tracker Init Info (Runtime):", { server, domainId });
 
-    if (activeRecord.current) {
-      activeRecord.current.stop();
-    }
+        if (!server || !domainId) {
+          console.warn("Ackee Tracker: Missing server URL or Domain ID environment variables.");
+          return;
+        }
 
-    const location =
-      window.location.origin +
-      pathname +
-      (searchParams.toString() ? `?${searchParams.toString()}` : "");
+        if (!trackerInstance.current) {
+          console.log("Ackee Tracker: Creating instance for", server);
+          trackerInstance.current = ackeeTracker.create(server, {
+            detailed: true,
+            ignoreLocalhost: false,
+          });
+        }
 
-    console.log("Ackee Tracker: Recording page view", location);
-    activeRecord.current = trackerInstance.current.record(domainId, {
-      ...ackeeTracker.attributes(true),
-      siteLocation: location,
-    });
+        if (activeRecord.current) {
+          activeRecord.current.stop();
+        }
+
+        const location =
+          window.location.origin +
+          pathname +
+          (searchParams.toString() ? `?${searchParams.toString()}` : "");
+
+        console.log("Ackee Tracker: Recording page view", location);
+        activeRecord.current = trackerInstance.current.record(domainId, {
+          ...ackeeTracker.attributes(true),
+          siteLocation: location,
+        });
+      } catch (err) {
+        console.error("Ackee Tracker: Failed to fetch configuration", err);
+      }
+    };
+
+    fetchConfigAndInit();
 
     return () => {
+      isMounted = false;
       if (activeRecord.current) {
         activeRecord.current.stop();
         activeRecord.current = null;
