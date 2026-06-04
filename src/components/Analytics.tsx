@@ -14,9 +14,15 @@ function AnalyticsTracker() {
     const server = process.env.NEXT_PUBLIC_ACKEE_SERVER;
     const domainId = process.env.NEXT_PUBLIC_ACKEE_DOMAIN_ID;
 
-    if (!server || !domainId) return;
+    console.log("Ackee Tracker Init Info:", { server, domainId });
+
+    if (!server || !domainId) {
+      console.warn("Ackee Tracker: Missing server URL or Domain ID environment variables.");
+      return;
+    }
 
     if (!trackerInstance.current) {
+      console.log("Ackee Tracker: Creating instance for", server);
       trackerInstance.current = ackeeTracker.create(server, {
         detailed: true,
         ignoreLocalhost: false,
@@ -32,6 +38,7 @@ function AnalyticsTracker() {
       pathname +
       (searchParams.toString() ? `?${searchParams.toString()}` : "");
 
+    console.log("Ackee Tracker: Recording page view", location);
     activeRecord.current = trackerInstance.current.record(domainId, {
       ...ackeeTracker.attributes(true),
       siteLocation: location,
