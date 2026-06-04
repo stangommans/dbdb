@@ -2,6 +2,22 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.3.0] - 2026-06-04
+
+### Added
+- **Interactive User Review Feed**: Displayed the authenticated user's reviews list with responsive pagination (10 reviews per page) on the profile page, including "Go to Bar", "Edit", and self-deletion actions.
+- **Dedicated About Page**: Extracted overall stats, system administration controls, and the "About DBDB" markdown overview into a brand new `/about` page.
+- **Admin Database Control Portal (`/admin`)**:
+  - Implemented secure administrative passcode gates (`/api/admin/verify` and passcode login UI).
+  - Designed a full-width spots database table with quick bar deletion options.
+  - Interactive details view to review history, with custom checkbox bulk deletion (`DELETE /api/reviews`).
+  - Interactive table sorting headers to sort bars by Reviews count, Dive Score, and Name.
+  - Dynamic location/country filtering dropdown parsing bar address strings, showing dynamic count annotations per country (e.g. `Netherlands (8)`).
+- **Permalink Routing**: Created native permalinks for `/explore`, `/stash`, `/profile`, `/about`, and `/admin`.
+
+### Changed
+- **Navigation Controls**: Refactored the floating navigation pill into a premium, icon-only navigation structure mapping to clean permalinks.
+
 ## [1.2.0] - 2026-06-01
 
 ### Removed

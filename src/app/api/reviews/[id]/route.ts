@@ -84,20 +84,26 @@ export async function DELETE(
   try {
     const { id } = await context.params;
     
+    // Get verified reviewer token UUID from cookie
+    const { uuid: reviewerUuid } = await getOrCreateReviewerToken();
+
     // Validate administrative override credentials
     const passcode = request.headers.get('x-admin-passcode');
     const configuredPasscode = process.env.ADMIN_PASSCODE || 'dbdb-admin';
+    const isAdmin = passcode === configuredPasscode;
     
-    if (!passcode || passcode !== configuredPasscode) {
-      return NextResponse.json({ error: 'Unauthorized. Invalid admin passcode.' }, { status: 401 });
-    }
-
     const review = await db.review.findUnique({
       where: { id },
     });
 
     if (!review) {
       return NextResponse.json({ error: 'Review not found' }, { status: 404 });
+    }
+
+    // Verify ownership or administrative override privileges
+    const isOwner = reviewerUuid && review.reviewerToken === reviewerUuid;
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json({ error: 'Unauthorized. You do not own this review.' }, { status: 403 });
     }
 
     await db.review.delete({

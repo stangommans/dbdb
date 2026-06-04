@@ -1,13 +1,17 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import dynamic from 'next/dynamic';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import AddBarSheet from '@/components/AddBarSheet';
 import ReviewForm from '@/components/ReviewForm';
 import FilterOverlay from '@/components/FilterOverlay';
 import ExploreView from '@/components/ExploreView';
 import StashView from '@/components/StashView';
 import ProfileView from '@/components/ProfileView';
+import AboutView from '@/components/AboutView';
+import AdminView from '@/components/AdminView';
 import { CURRENCIES, convertFromBase, formatCurrency } from '@/lib/currency';
 import VesselIcon from '@/components/VesselIcon';
 
@@ -52,23 +56,35 @@ interface Bar {
   reviews: Review[];
 }
 
-type Tab = 'MAP' | 'EXPLORE' | 'STASH' | 'PROFILE';
+type Tab = 'MAP' | 'EXPLORE' | 'STASH' | 'PROFILE' | 'ABOUT' | 'ADMIN';
 
-export default function Home() {
+export default function DashboardShell({ children }: { children?: React.ReactNode }) {
+  const params = useParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Route Parameter Synced States
+  const barId = params?.id as string | undefined;
+  const reviewId = params?.reviewId as string | undefined;
+
   const [bars, setBars] = useState<Bar[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState<'rating' | 'reviews' | 'name'>('rating');
 
-  // Multi-tab Layout states
-  const [activeTab, setActiveTab] = useState<Tab>('MAP');
+  // Multi-tab Layout states derived from URL pathname
+  const activeTab: Tab = (() => {
+    if (pathname === '/explore') return 'EXPLORE';
+    if (pathname === '/stash') return 'STASH';
+    if (pathname === '/profile') return 'PROFILE';
+    if (pathname === '/about') return 'ABOUT';
+    if (pathname === '/admin') return 'ADMIN';
+    return 'MAP';
+  })();
   const [savedBarIds, setSavedBarIds] = useState<string[]>([]);
 
-  // Interactive UI panel controllers
-  const [selectedBarId, setSelectedBarId] = useState<string | null>(null);
+  // Interactive UI controllers (non-route specific)
   const [isAddBarOpen, setIsAddBarOpen] = useState(false);
-  const [isReviewOpen, setIsReviewOpen] = useState(false);
-  const [editingReview, setEditingReview] = useState<Review | null>(null);
   const [isMobileListOpen, setIsMobileListOpen] = useState(false);
 
   // Real-time Filters Overlay states
@@ -84,7 +100,7 @@ export default function Home() {
   const [activeCurrency, setActiveCurrency] = useState<string>('EUR');
 
   // Initial resource load
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       // 1. Fetch secure user anonymous UUID token
       const meRes = await fetch('/api/me');
@@ -104,43 +120,51 @@ export default function Home() {
     } finally {
       setLoading(false);
     }
-  };
-
-  useEffect(() => {
-    fetchData();
-
-    // Load saved stash on client mount
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('dbdb_stash');
-      if (stored) {
-        try {
-          setSavedBarIds(JSON.parse(stored));
-        } catch (e) {
-          console.error('Failed to parse stash from localStorage:', e);
-        }
-      }
-
-      const adminStored = localStorage.getItem('dbdb_admin_passcode');
-      if (adminStored) {
-        setAdminPasscode(adminStored);
-      }
-      const currencyStored = localStorage.getItem('dbdb_currency');
-      if (currencyStored) {
-        setActiveCurrency(currencyStored);
-      }
-    }
   }, []);
 
+  useEffect(() => {
+    const initializeDashboard = async () => {
+      await fetchData();
+
+      // Load saved stash on client mount
+      if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('dbdb_stash');
+        if (stored) {
+          try {
+            setSavedBarIds(JSON.parse(stored));
+          } catch (e) {
+            console.error('Failed to parse stash from localStorage:', e);
+          }
+        }
+
+        const adminStored = localStorage.getItem('dbdb_admin_passcode');
+        if (adminStored) {
+          setAdminPasscode(adminStored);
+        }
+        const currencyStored = localStorage.getItem('dbdb_currency');
+        if (currencyStored) {
+          setActiveCurrency(currencyStored);
+        }
+      }
+    };
+
+    initializeDashboard();
+  }, [fetchData]);
+
   // Map tap handler to launch manual coordinate capture drawer
-  const handleMapClick = (lat: number, lng: number) => {
+  const handleMapClick = useCallback((lat: number, lng: number) => {
     setNewPinCoords({ latitude: lat, longitude: lng });
     setIsAddBarOpen(true);
-  };
+  }, []);
+
+  const handleBarSelect = useCallback((id: string) => {
+    router.push(`/bar/${id}`);
+  }, [router]);
 
   // Callback when a bar is newly created or imported
-  const handleBarAdded = (newBar: any) => {
+  const handleBarAdded = (newBar: Bar) => {
     fetchData();
-    setSelectedBarId(newBar.id);
+    router.push(`/bar/${newBar.id}`);
   };
 
   const handleAdminUnlock = (passcode: string | null) => {
@@ -154,12 +178,12 @@ export default function Home() {
     }
   };
 
-  const handleDeleteReview = async (reviewId: string) => {
+  const handleDeleteReview = async (targReviewId: string) => {
     if (!adminPasscode) return;
     if (!window.confirm("Are you sure you want to permanently delete this review?")) return;
 
     try {
-      const res = await fetch(`/api/reviews/${reviewId}`, {
+      const res = await fetch(`/api/reviews/${targReviewId}`, {
         method: "DELETE",
         headers: {
           "x-admin-passcode": adminPasscode,
@@ -168,6 +192,9 @@ export default function Home() {
 
       if (res.ok) {
         await fetchData();
+        if (reviewId === targReviewId) {
+          router.push(`/bar/${barId}`);
+        }
       } else {
         const errData = await res.json();
         alert(errData.error || "Failed to delete review.");
@@ -178,12 +205,12 @@ export default function Home() {
     }
   };
 
-  const handleDeleteBar = async (barId: string) => {
+  const handleDeleteBar = async (targBarId: string) => {
     if (!adminPasscode) return;
     if (!window.confirm("WARNING: Deleting this bar will permanently erase it along with ALL its reviews. This action cannot be undone. Proceed?")) return;
 
     try {
-      const res = await fetch(`/api/bars/${barId}`, {
+      const res = await fetch(`/api/bars/${targBarId}`, {
         method: "DELETE",
         headers: {
           "x-admin-passcode": adminPasscode,
@@ -191,7 +218,7 @@ export default function Home() {
       });
 
       if (res.ok) {
-        setSelectedBarId(null);
+        router.push('/');
         await fetchData();
       } else {
         const errData = await res.json();
@@ -206,6 +233,7 @@ export default function Home() {
   // Callback when a review is created or updated
   const handleReviewSubmitted = () => {
     fetchData();
+    router.push(`/bar/${barId}`);
   };
 
   // Stash coordination utilities
@@ -227,12 +255,24 @@ export default function Home() {
   };
 
   // Find the currently selected bar
+  const selectedBarId = barId || null;
   const selectedBar = bars.find((bar) => bar.id === selectedBarId);
 
   // Determine if the current user has already reviewed the selected bar
   const userReviewForSelectedBar = selectedBar?.reviews?.find(
     (review) => review.reviewerToken === userUuid
   );
+
+  // Determine review form visibility and which review to edit
+  const isReviewOpen = reviewId === 'new' || (!!reviewId && selectedBar?.reviews.some(r => r.id === reviewId && r.reviewerToken === userUuid));
+  const editingReview = reviewId && reviewId !== 'new'
+    ? selectedBar?.reviews.find(r => r.id === reviewId && r.reviewerToken === userUuid) || null
+    : null;
+
+  // Third-party review details overlay modal (when reviewId is not ours)
+  const viewReview = reviewId && reviewId !== 'new'
+    ? selectedBar?.reviews.find(r => r.id === reviewId && r.reviewerToken !== userUuid) || null
+    : null;
 
   // Get aggregated user-submitted amenity counts for the selected bar
   const votedAmenities = selectedBar
@@ -310,7 +350,7 @@ export default function Home() {
   if (minRating > 0) activeFilterCount++;
   if (selectedAmenities.length > 0) activeFilterCount += selectedAmenities.length;
 
-  // Calculate global average price per ml (EUR) across all reviews in all bars and other global stats
+  // Calculate global stats
   const globalReviews = bars.flatMap(b => b.reviews || []);
   const totalBars = bars.length;
   const totalReviews = globalReviews.length;
@@ -324,20 +364,22 @@ export default function Home() {
     ? convertFromBase(globalAvgPricePerMl * 330, activeCurrency)
     : null;
 
-
-
   return (
     <main className="relative w-screen h-[100dvh] bg-[#131313] text-[#e5e2e1] flex flex-col overflow-hidden font-sans">
+      
+      {/* Hidden children for Next.js routing tree integration */}
+      <div className="hidden" aria-hidden="true">{children}</div>
 
       {/* 1. TOP APP BAR GLASS HEADER */}
       <header className="w-full shrink-0 h-20 glass-panel border-x-0 border-t-0 px-6 flex items-center justify-between z-[600] relative">
-        {/* Left section: Brand */}
+        {/* Brand */}
         <div className="flex items-center gap-4 lg:gap-6 select-none z-10">
-          {/* Brand details */}
           <div
-            onClick={() => window.location.reload()}
+            onClick={() => {
+              router.push('/');
+            }}
             className="flex items-center gap-3 cursor-pointer hover:opacity-85 transition-opacity"
-            title="Refresh Page"
+            title="Go to Home"
           >
             <div className="relative">
               <span className="text-3xl filter drop-shadow-[0_0_8px_rgba(245,197,24,0.85)] font-sans animate-pulse">🍺</span>
@@ -354,9 +396,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Expanded Global Stats Bar (Centered on Desktop) */}
+        {/* Center Global Stats */}
         <div className="hidden md:flex absolute left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 items-center gap-3 lg:gap-5 bg-[#181818]/60 border border-white/5 rounded-2xl px-4 lg:px-5 py-2.5 lg:py-3 shadow-inner z-0">
-          {/* Total Bars */}
           <div className="flex items-center gap-3 border-r border-white/10 pr-5" title="Total Bars">
             <span className="material-symbols-outlined text-[26px] text-amber-500/70 font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>storefront</span>
             <div className="flex flex-col">
@@ -365,7 +406,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Total Reviews */}
           <div className="flex items-center gap-3 border-r border-white/10 pr-5" title="Total Reviews">
             <span className="material-symbols-outlined text-[26px] text-amber-500/70 font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>forum</span>
             <div className="flex flex-col">
@@ -374,8 +414,7 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Unique Reviewers */}
-          <div className="flex items-center gap-3 border-r border-white/10 pr-5" title="Unique Reviewers (who posted)">
+          <div className="flex items-center gap-3 border-r border-white/10 pr-5" title="Unique Reviewers">
             <span className="material-symbols-outlined text-[26px] text-amber-500/70 font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>group</span>
             <div className="flex flex-col">
               <span className="hidden xl:inline text-[18px] font-bold uppercase tracking-wider text-neutral-400 leading-none mb-1">Reviewers</span>
@@ -383,7 +422,6 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Global Average 330ml */}
           {activeGlobalAvg330ml !== null && (
             <div className="flex items-center gap-3" title="Global Average Price of a 330ml Drink">
               <span className="material-symbols-outlined text-[26px] text-amber-500/70 font-bold" style={{ fontVariationSettings: "'FILL' 1" }}>payments</span>
@@ -397,9 +435,8 @@ export default function Home() {
           )}
         </div>
 
-        {/* Global actions bar */}
+        {/* Global actions */}
         <div className="flex items-center gap-3.5">
-          {/* Quick Filters toggle */}
           <button
             onClick={() => setIsFilterOpen(true)}
             className="relative px-4 py-3 hover:bg-white/5 border border-white/5 hover:border-white/10 rounded-xl transition-all cursor-pointer select-none active:scale-95 flex items-center gap-2 font-display text-[18px] font-bold text-on-surface-variant hover:text-white uppercase tracking-wider min-h-[48px]"
@@ -413,7 +450,6 @@ export default function Home() {
             )}
           </button>
 
-          {/* Manual Spot added trigger */}
           <button
             onClick={() => {
               setNewPinCoords(null);
@@ -437,7 +473,7 @@ export default function Home() {
           <Map
             bars={filteredAndSortedBars}
             selectedBarId={selectedBarId}
-            onBarSelect={(id) => setSelectedBarId(id)}
+            onBarSelect={handleBarSelect}
             onMapClick={handleMapClick}
             newPinCoords={newPinCoords}
           />
@@ -455,21 +491,18 @@ export default function Home() {
             </div>
           )}
 
-          {/* Floating Sidebar overlays (Desktop/Tablet list overlay, slide-over drawer on mobile) */}
+          {/* Floating Sidebar overlays */}
           <div className={`absolute left-6 top-6 bottom-6 z-[450] w-[450px] max-w-[calc(100vw-48px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300 transform translate-z-0
             ${isMobileListOpen
               ? 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-0 max-md:opacity-100'
               : 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
             }
           `}>
-            {/* Quick stats and sort dropdown */}
             <div className="p-5 border-b border-white/5 bg-surface-container-lowest/20 flex flex-col gap-4 flex-shrink-0">
-              {/* Row 1: Title + Mobile Close Button */}
               <div className="flex items-center justify-between gap-3 w-full">
                 <span className="font-display text-[18px] font-bold text-primary tracking-widest uppercase">
                   Discover dives ({filteredAndSortedBars.length})
                 </span>
-                {/* Mobile close drawer trigger */}
                 <button
                   onClick={() => setIsMobileListOpen(false)}
                   className="p-3 bg-[#242424] hover:bg-[#2d2d2d] border border-white/5 rounded-xl text-neutral-400 hover:text-white md:hidden flex items-center justify-center transition-all cursor-pointer min-h-[48px] min-w-[48px]"
@@ -479,19 +512,18 @@ export default function Home() {
                 </button>
               </div>
 
-              {/* Row 2: Sort Actions */}
               <div className="flex items-center justify-between gap-3 w-full">
                 <span className="text-[18px] text-on-surface-variant font-bold uppercase tracking-wider">
                   Sort by
                 </span>
                 <div className="flex bg-surface-container-lowest border border-white/5 rounded-xl p-1 gap-1">
-                  {[
+                  {([
                     { key: 'rating', label: 'Score' },
                     { key: 'reviews', label: 'Reviews' }
-                  ].map((item) => (
+                  ] as const).map((item) => (
                     <button
                       key={item.key}
-                      onClick={() => setSortBy(item.key as any)}
+                      onClick={() => setSortBy(item.key)}
                       className={`px-4 py-2.5 rounded-xl font-display text-[18px] font-bold tracking-wider uppercase transition-all cursor-pointer min-h-[48px]
                         ${sortBy === item.key
                           ? 'bg-primary-container text-on-primary-container shadow-md shadow-amber-500/10'
@@ -504,7 +536,6 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Scrollable list items */}
             <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar">
               {loading ? (
                 <div className="h-full flex items-center justify-center text-[18px] text-on-surface-variant">
@@ -526,13 +557,11 @@ export default function Home() {
               ) : (
                 filteredAndSortedBars.map((bar) => {
                   const active = bar.id === selectedBarId;
-                  const priceTag = null;
-
                   return (
                     <div
                       key={bar.id}
                       onClick={() => {
-                        setSelectedBarId(bar.id);
+                        router.push(`/bar/${bar.id}`);
                         setIsMobileListOpen(false);
                       }}
                       className={`p-5 rounded-2xl border transition-all cursor-pointer select-none group relative overflow-hidden
@@ -553,12 +582,6 @@ export default function Home() {
 
                       <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5 text-[18px] font-bold text-on-surface-variant tracking-wider uppercase">
                         <span>{bar.reviewCount} Review{bar.reviewCount === 1 ? '' : 's'}</span>
-                        {priceTag && (
-                          <>
-                            <span>•</span>
-                            <span className="text-primary font-black">{priceTag}</span>
-                          </>
-                        )}
                       </div>
                     </div>
                   );
@@ -574,8 +597,7 @@ export default function Home() {
             <ExploreView
               bars={filteredAndSortedBars}
               onBarSelect={(id) => {
-                setSelectedBarId(id);
-                setActiveTab('MAP');
+                router.push(`/bar/${id}`);
               }}
               selectedBarId={selectedBarId}
               activeCurrency={activeCurrency}
@@ -590,8 +612,7 @@ export default function Home() {
               bars={bars}
               savedBarIds={savedBarIds}
               onBarSelect={(id) => {
-                setSelectedBarId(id);
-                setActiveTab('MAP');
+                router.push(`/bar/${id}`);
               }}
               onRemoveBar={handleRemoveBar}
             />
@@ -605,36 +626,64 @@ export default function Home() {
               bars={bars}
               reviewerToken={userUuid}
               savedBarCount={savedBarIds.length}
+              activeCurrency={activeCurrency}
+              onBarSelect={handleBarSelect}
+              onReviewDeleted={fetchData}
+            />
+          </div>
+        )}
+
+        {/* ABOUT TAB */}
+        {activeTab === 'ABOUT' && (
+          <div className="absolute inset-0 z-20 w-full h-full bg-[#131313] overflow-y-auto custom-scrollbar pb-32">
+            <AboutView
+              totalBars={totalBars}
+              totalReviews={totalReviews}
+              uniqueUsersCount={uniqueUsersCount}
+              activeGlobalAvg330ml={activeGlobalAvg330ml}
+              activeCurrency={activeCurrency}
               adminPasscode={adminPasscode}
               onAdminUnlock={handleAdminUnlock}
             />
           </div>
         )}
 
-        {/* DETAILS DRAWER / SIDE-SHEET (Shared across app) */}
+        {/* ADMIN TAB */}
+        {activeTab === 'ADMIN' && (
+          <div className="absolute inset-0 z-20 w-full h-full bg-[#131313] overflow-y-auto custom-scrollbar pb-32">
+            <AdminView
+              bars={bars}
+              adminPasscode={adminPasscode}
+              onAdminUnlock={handleAdminUnlock}
+              onRefresh={fetchData}
+              onBarSelect={(id) => {
+                router.push(`/bar/${id}`);
+              }}
+            />
+          </div>
+        )}
+
+        {/* DETAILS DRAWER / SIDE-SHEET */}
         {selectedBar && (
           <div
             className="absolute right-6 top-6 bottom-6 z-[550] w-[460px] max-w-[calc(100vw-32px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300
               max-md:left-4 max-md:right-4 max-md:top-0 max-md:bottom-0 max-md:w-auto max-md:h-[100dvh] transform translate-z-0"
           >
-            {/* Drawer Header detail */}
             <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between flex-shrink-0 bg-surface-container-lowest/20 gap-3">
               <div className="truncate pr-4">
                 <h2 className="font-display text-[22px] font-black text-white truncate">{selectedBar.name}</h2>
                 <p className="text-[18px] text-on-surface-variant font-normal truncate mt-1">{selectedBar.address}</p>
               </div>
               <div className="flex items-center gap-3 flex-shrink-0">
-                {/* Admin Delete Bar Button */}
                 {adminPasscode && (
                   <button
                     onClick={() => handleDeleteBar(selectedBar.id)}
                     className="h-12 w-12 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 hover:bg-red-500/20 active:scale-95 flex items-center justify-center transition-all cursor-pointer min-h-[48px] min-w-[48px]"
-                    title="Delete spot (Permanently purges bar & all ratings)"
+                    title="Delete spot"
                   >
                     <span className="material-symbols-outlined text-[22px]">delete</span>
                   </button>
                 )}
-                {/* Heart Quick Favorite icon */}
                 <button
                   onClick={() => toggleSaveBar(selectedBar.id)}
                   className="text-on-surface-variant hover:text-primary active:scale-90 transition-all p-3 hover:bg-white/5 rounded-xl cursor-pointer flex items-center justify-center min-h-[48px] min-w-[48px]"
@@ -646,9 +695,8 @@ export default function Home() {
                     favorite
                   </span>
                 </button>
-                {/* Close Drawer button */}
                 <button
-                  onClick={() => setSelectedBarId(null)}
+                  onClick={() => router.push('/')}
                   className="text-on-surface-variant hover:text-white p-3 hover:bg-white/5 rounded-xl transition-colors flex items-center justify-center cursor-pointer min-h-[48px] min-w-[48px]"
                 >
                   <span className="material-symbols-outlined text-[24px]">close</span>
@@ -656,12 +704,8 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Scrollable details panel */}
             <div className="flex-grow overflow-y-auto p-6 pb-20 md:pb-6 space-y-6 custom-scrollbar">
-
-              {/* Aggregated widgets grid */}
               <div className="grid grid-cols-2 gap-4">
-                {/* Star rating panel */}
                 <div className="col-span-2 p-5 bg-surface-container-low border border-white/5 rounded-2xl flex flex-col justify-between min-h-[140px]">
                   <span className="text-[18px] font-bold uppercase tracking-widest text-primary">Dive Score</span>
                   <div className="mt-2.5 flex items-baseline gap-1">
@@ -673,7 +717,6 @@ export default function Home() {
                   <div className="text-[18px] text-on-surface-variant mt-2 font-bold uppercase tracking-wider">Based on {selectedBar.reviewCount} rating{selectedBar.reviewCount === 1 ? '' : 's'}</div>
                 </div>
 
-                {/* Standard drink ML pricing details */}
                 {selectedBar.averagePricePerMl !== null && (() => {
                   const activeAvgPricePerMl = convertFromBase(selectedBar.averagePricePerMl, activeCurrency);
                   const activeSymbol = CURRENCIES.find(c => c.code === activeCurrency)?.symbol || '€';
@@ -694,7 +737,6 @@ export default function Home() {
                 })()}
               </div>
 
-              {/* Reviewer Vibe & Amenities Summary */}
               <div className="p-5 bg-surface-container-low border border-white/5 rounded-2xl space-y-4">
                 <span className="block text-[18px] font-bold uppercase tracking-widest text-primary">Vibe & Amenities Summary</span>
                 {votedAmenities.length > 0 ? (
@@ -702,7 +744,7 @@ export default function Home() {
                     {votedAmenities.map((amenity) => (
                       <div
                         key={amenity.key}
-                        className="px-4 py-2 rounded-xl border border-amber-500/10 bg-amber-500/5 text-[18px] text-white font-semibold flex items-center gap-2 filter drop-shadow-[0_0_4px_rgba(245,197,24,0.1)] animate-fadeIn"
+                        className="px-4 py-2 rounded-xl border border-amber-500/10 bg-amber-500/5 text-[18px] text-white font-semibold flex items-center gap-2 filter drop-shadow-[0_0_4px_rgba(245,197,24,0.1)]"
                       >
                         <span>{amenity.label}</span>
                         <span className="text-[18px] font-extrabold text-amber-500 px-2 py-0.5 bg-amber-500/10 rounded-lg">
@@ -719,12 +761,14 @@ export default function Home() {
                 )}
               </div>
 
-              {/* Action items triggers */}
               <div className="flex gap-4">
                 <button
                   onClick={() => {
-                    setEditingReview(userReviewForSelectedBar || null);
-                    setIsReviewOpen(true);
+                    if (userReviewForSelectedBar) {
+                      router.push(`/bar/${selectedBar.id}/review/${userReviewForSelectedBar.id}`);
+                    } else {
+                      router.push(`/bar/${selectedBar.id}/review/new`);
+                    }
                   }}
                   className="flex-1 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 font-display text-[18px] font-bold tracking-widest uppercase py-3.5 rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer flex items-center justify-center gap-2 min-h-[48px]"
                 >
@@ -743,7 +787,6 @@ export default function Home() {
                 </a>
               </div>
 
-              {/* Reviews timeline timeline */}
               <div className="space-y-6">
                 <span className="block text-[20px] font-bold uppercase tracking-widest text-primary border-b border-white/5 pb-4.5">
                   Reviews ({selectedBar.reviews.length})
@@ -760,10 +803,13 @@ export default function Home() {
                       return (
                         <div
                           key={review.id}
-                          className={`p-6 bg-surface-container border rounded-2xl relative space-y-4
+                          onClick={() => {
+                            // Clicking on a review redirects to its detail path
+                            router.push(`/bar/${selectedBar.id}/review/${review.id}`);
+                          }}
+                          className={`p-6 bg-surface-container border rounded-2xl relative space-y-4 cursor-pointer hover:border-amber-500/25 transition-all
                             ${isOwnReview ? 'border-primary-container/40 bg-primary-container/5' : 'border-white/5'}`}
                         >
-                          {/* Top review header */}
                           <div className="flex flex-wrap items-center justify-between gap-4 text-[18px]">
                             <div className="flex items-center gap-3.5">
                               <span className="text-primary font-bold bg-primary/10 border border-primary/10 px-3 py-1 rounded text-[18px] font-display">
@@ -777,12 +823,11 @@ export default function Home() {
                                 })}
                               </span>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-3" onClick={(e) => e.stopPropagation()}>
                               {isOwnReview && (
                                 <button
                                   onClick={() => {
-                                    setEditingReview(review);
-                                    setIsReviewOpen(true);
+                                    router.push(`/bar/${selectedBar.id}/review/${review.id}`);
                                   }}
                                   className="text-primary hover:text-white font-display text-[18px] font-bold tracking-wider uppercase cursor-pointer min-h-[48px] px-4 flex items-center justify-center rounded-xl bg-surface-container-high border border-white/5 hover:border-white/10 active:scale-95 transition-all"
                                 >
@@ -802,7 +847,6 @@ export default function Home() {
                             </div>
                           </div>
 
-                          {/* Dynamic metadata filters tags */}
                           {review.amenities && (
                             <div className="flex flex-wrap gap-2.5 pt-1">
                               {(() => {
@@ -818,7 +862,7 @@ export default function Home() {
                                 return review.amenities.split(',').filter(Boolean).map((tag) => (
                                   <span
                                     key={tag}
-                                    className="text-[18px] font-bold tracking-wider px-3.5 py-2 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500 filter drop-shadow-[0_0_2px_rgba(245,197,24,0.05)]"
+                                    className="text-[18px] font-bold tracking-wider px-3.5 py-2 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500"
                                   >
                                     {labels[tag.trim()] || tag.trim()}
                                   </span>
@@ -827,7 +871,6 @@ export default function Home() {
                             </div>
                           )}
 
-                          {/* Purchased Drink Details Badge */}
                           {review.purchasePrice !== null && review.purchasePrice !== undefined && review.vesselSizeMl && (
                             <div className="p-4.5 bg-neutral-950/40 border border-white/5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-[18px]">
                               <span className="text-on-surface-variant font-medium flex items-center gap-2">
@@ -853,23 +896,27 @@ export default function Home() {
                             </div>
                           )}
 
-                          {/* Comment line */}
                           {review.comment && (
                             <p className="text-[18px] text-on-surface-variant leading-loose font-light break-words">
-                              "{review.comment}"
+                              &quot;{review.comment}&quot;
                             </p>
                           )}
 
-                          {/* Lightbox thumbnail image */}
                           {review.photoUrl && (
                             <div
-                              onClick={() => setActivePhotoUrl(review.photoUrl)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActivePhotoUrl(review.photoUrl);
+                              }}
                               className="h-36 rounded-xl border border-white/5 overflow-hidden bg-surface-container-lowest cursor-zoom-in group relative"
                             >
-                              <img
+                              <Image
                                 src={review.photoUrl}
                                 alt="Uploaded bar capture"
-                                className="w-full h-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300"
+                                fill
+                                sizes="(max-width: 768px) 100vw, 33vw"
+                                unoptimized
+                                className="object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-300"
                               />
                               <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center text-[18px] font-bold font-display uppercase tracking-widest text-white transition-opacity">
                                 <span className="material-symbols-outlined text-[22px] mr-2">zoom_in</span> Enlarge
@@ -920,8 +967,7 @@ export default function Home() {
               barName={selectedBar.name}
               existingReview={editingReview}
               onClose={() => {
-                setIsReviewOpen(false);
-                setEditingReview(null);
+                router.push(`/bar/${selectedBar.id}`);
               }}
               onReviewSubmitted={handleReviewSubmitted}
             />
@@ -932,13 +978,16 @@ export default function Home() {
       {/* 7. FULLSCREEN IMAGE LIGHTBOX MODAL OVERLAY */}
       {activePhotoUrl && (
         <div
-          className="fixed inset-0 z-[60] bg-black/95 flex flex-col items-center justify-center p-6 backdrop-blur-md cursor-zoom-out animate-in fade-in duration-200"
+          className="fixed inset-0 z-[1060] bg-black/95 flex flex-col items-center justify-center p-6 backdrop-blur-md cursor-zoom-out animate-in fade-in duration-200"
           onClick={() => setActivePhotoUrl(null)}
         >
           <div className="relative max-w-full max-h-[80vh] overflow-hidden rounded-2xl shadow-2xl border border-white/5">
-            <img
+            <Image
               src={activePhotoUrl}
               alt="Fullscreen Bar Visual Preview"
+              width={1920}
+              height={1080}
+              unoptimized
               className="max-w-full max-h-[80vh] object-contain select-none"
             />
           </div>
@@ -948,31 +997,166 @@ export default function Home() {
         </div>
       )}
 
+      {/* 8. REVIEW DETAIL MODAL (READ-ONLY OVERLAY FOR OTHERS' REVIEWS) */}
+      {viewReview && selectedBar && (
+        <div 
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          onClick={() => router.push(`/bar/${selectedBar.id}`)}
+        >
+          <div 
+            className="w-full max-w-[480px] bg-[#181818] border border-white/5 rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Modal Header */}
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <div>
+                <span className="text-[14px] font-bold uppercase tracking-widest text-primary">Review Detail</span>
+                <h3 className="font-display text-[20px] font-black text-white truncate max-w-[280px] mt-0.5">{selectedBar.name}</h3>
+              </div>
+              <button
+                onClick={() => router.push(`/bar/${selectedBar.id}`)}
+                className="text-on-surface-variant hover:text-white p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer flex items-center justify-center min-h-[40px] min-w-[40px]"
+                title="Close"
+              >
+                <span className="material-symbols-outlined text-[22px]">close</span>
+              </button>
+            </div>
+
+            {/* Score & Date */}
+            <div className="flex items-center justify-between text-[18px]">
+              <span className="text-primary font-bold bg-primary/10 border border-primary/10 px-3.5 py-1.5 rounded-xl font-display text-[18px]">
+                ★ {viewReview.diveScore.toFixed(1)}
+              </span>
+              <span className="text-on-surface-variant font-medium">
+                {new Date(viewReview.createdAt).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric'
+                })}
+              </span>
+            </div>
+
+            {/* Vessel & Pricing Details */}
+            {viewReview.purchasePrice !== null && viewReview.purchasePrice !== undefined && viewReview.vesselSizeMl && (
+              <div className="p-4 bg-neutral-950/40 border border-white/5 rounded-2xl flex flex-wrap items-center justify-between gap-3 text-[18px]">
+                <span className="text-on-surface-variant font-medium flex items-center gap-2">
+                  <VesselIcon vessel={viewReview.vessel} className="w-6 h-6 text-amber-500/70" />
+                  <span className="text-neutral-300 font-bold">
+                    {viewReview.vesselSizeMl}ml {viewReview.vessel || 'Drink'}
+                  </span>
+                </span>
+                <div className="flex flex-col items-end">
+                  <span className="font-extrabold text-white">
+                    {formatCurrency(viewReview.purchasePrice, viewReview.purchaseCurrency || 'EUR')}
+                  </span>
+                  {viewReview.pricePerMl && (
+                    <span className="text-[14px] text-amber-500 font-bold mt-0.5">
+                      {(() => {
+                        const activePricePerMl = convertFromBase(viewReview.pricePerMl, activeCurrency);
+                        const activeSymbol = CURRENCIES.find(c => c.code === activeCurrency)?.symbol || '€';
+                        return `${activeSymbol}${activePricePerMl.toFixed(4)}/ml`;
+                      })()}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Amenities / Vibe Tags */}
+            {viewReview.amenities && (
+              <div className="space-y-2">
+                <span className="block text-[14px] font-bold uppercase tracking-wider text-on-surface-variant">Vibe Tags</span>
+                <div className="flex flex-wrap gap-2.5">
+                  {(() => {
+                    const labels: Record<string, string> = {
+                      CASH_ONLY: "💵 Cash Only",
+                      POOL_TABLE: "🎱 Pool Table",
+                      LIVE_MUSIC: "🎸 Live Music",
+                      CRAFT_BEER: "🍺 Craft Beer",
+                      SMOKING_AREA: "🚬 Smoking Area",
+                      JUKEBOX: "🎵 Jukebox",
+                      DARTBOARD: "🎯 Dartboard",
+                    };
+                    return viewReview.amenities.split(',').filter(Boolean).map((tag) => (
+                      <span
+                        key={tag}
+                        className="text-[16px] font-bold tracking-wider px-3.5 py-1.5 rounded bg-amber-500/5 border border-amber-500/10 text-amber-500"
+                      >
+                        {labels[tag.trim()] || tag.trim()}
+                      </span>
+                    ));
+                  })()}
+                </div>
+              </div>
+            )}
+
+            {/* Comments */}
+            {viewReview.comment && (
+              <div className="space-y-2">
+                <span className="block text-[14px] font-bold uppercase tracking-wider text-on-surface-variant">Comments</span>
+                <p className="text-[18px] text-on-surface-variant leading-relaxed font-light italic bg-white/5 p-4 rounded-xl border border-white/5 break-words">
+                  &quot;{viewReview.comment}&quot;
+                </p>
+              </div>
+            )}
+
+            {/* Photo */}
+            {viewReview.photoUrl && (
+              <div className="rounded-xl border border-white/5 overflow-hidden bg-surface-container-lowest max-h-[240px] relative w-full h-[240px]">
+                <Image
+                  src={viewReview.photoUrl}
+                  alt="Review capture"
+                  fill
+                  sizes="(max-width: 480px) 100vw, 480px"
+                  unoptimized
+                  className="object-cover cursor-zoom-in"
+                  onClick={() => setActivePhotoUrl(viewReview.photoUrl)}
+                />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* UNIFIED FLOATING BOTTOM NAVIGATION BAR */}
-      <nav className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[450] flex items-center justify-around md:justify-center gap-1 md:gap-3 bg-[#181818]/90 backdrop-blur-md border border-white/10 rounded-3xl md:rounded-full p-2 md:p-1.5 shadow-2xl shadow-black/90 w-[calc(100vw-24px)] md:w-auto min-w-[320px] md:min-w-[480px] max-md:min-w-0 transition-all duration-300 transform translate-z-0
+      <nav className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-[450] flex items-center justify-center gap-2 md:gap-3 bg-[#181818]/90 backdrop-blur-md border border-white/10 rounded-full p-2 shadow-2xl shadow-black/90 w-auto transition-all duration-300 transform translate-z-0
         ${(isMobileListOpen || selectedBarId) ? 'max-md:translate-y-28 max-md:opacity-0 max-md:pointer-events-none' : 'max-md:translate-y-0 max-md:opacity-100'}`}
       >
-        {[
-          { id: 'MAP', label: 'Map', icon: 'map' },
-          { id: 'EXPLORE', label: 'Explore', icon: 'explore' },
-          { id: 'STASH', label: 'My Stash', icon: 'favorite' },
-          { id: 'PROFILE', label: 'Profile', icon: 'person' }
-        ].map((tab) => {
-          const active = activeTab === tab.id;
-          return (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id as Tab)}
-              className={`flex flex-col md:flex-row items-center justify-center gap-1 md:gap-2 px-1.5 md:px-5 py-2 md:py-2.5 rounded-2xl md:rounded-full transition-all cursor-pointer select-none active:scale-95 flex-1 md:flex-initial min-h-[52px] md:min-h-[44px]
-                ${active
-                  ? 'bg-primary text-neutral-950 font-black shadow-lg shadow-amber-500/10'
-                  : 'text-neutral-400 hover:text-white'}`}
-            >
-              <span className="material-symbols-outlined text-[24px] md:text-[22px]" style={{ fontVariationSettings: ` 'FILL' ${active ? '1' : '0'} ` }}>{tab.icon}</span>
-              <span className="font-display text-[11px] md:text-[18px] font-bold uppercase tracking-wider leading-none">{tab.label}</span>
-            </button>
-          );
-        })}
+        {(() => {
+          const navItems = [
+            { id: 'MAP', label: 'Map', icon: 'map' },
+            { id: 'EXPLORE', label: 'Explore', icon: 'explore' },
+            { id: 'STASH', label: 'My Stash', icon: 'favorite' },
+            { id: 'PROFILE', label: 'Profile', icon: 'person' },
+            { id: 'ABOUT', label: 'About', icon: 'info' }
+          ];
+          if (adminPasscode) {
+            navItems.push({ id: 'ADMIN', label: 'Admin', icon: 'admin_panel_settings' });
+          }
+          return navItems.map((tab) => {
+            const active = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => {
+                  if (tab.id === 'MAP') {
+                    router.push('/');
+                  } else {
+                    const path = tab.id === 'STASH' ? 'stash' : tab.id.toLowerCase();
+                    router.push(`/${path}`);
+                  }
+                }}
+                title={tab.label}
+                className={`h-12 w-12 rounded-full flex items-center justify-center transition-all cursor-pointer select-none active:scale-95 duration-200
+                  ${active
+                    ? 'bg-primary text-neutral-950 shadow-lg shadow-amber-500/20'
+                    : 'text-neutral-400 hover:text-white hover:bg-white/5'}`}
+              >
+                <span className="material-symbols-outlined text-[24px]" style={{ fontVariationSettings: ` 'FILL' ${active ? '1' : '0'} ` }}>{tab.icon}</span>
+              </button>
+            );
+          });
+        })()}
       </nav>
 
     </main>

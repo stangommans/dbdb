@@ -82,6 +82,51 @@ export async function POST(request: Request) {
   }
 }
 
+export async function DELETE(request: Request) {
+  try {
+    const passcode = request.headers.get('x-admin-passcode');
+    const configuredPasscode = process.env.ADMIN_PASSCODE || 'dbdb-admin';
+    const isAdmin = passcode === configuredPasscode;
+
+    if (!isAdmin) {
+      return NextResponse.json({ error: 'Unauthorized.' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { reviewIds } = body;
+
+    if (!reviewIds || !Array.isArray(reviewIds) || reviewIds.length === 0) {
+      return NextResponse.json({ error: 'Missing review IDs' }, { status: 400 });
+    }
+
+    const reviews = await db.review.findMany({
+      where: {
+        id: { in: reviewIds }
+      },
+      select: {
+        barId: true
+      }
+    });
+
+    const uniqueBarIds = Array.from(new Set(reviews.map(r => r.barId)));
+
+    await db.review.deleteMany({
+      where: {
+        id: { in: reviewIds }
+      }
+    });
+
+    for (const barId of uniqueBarIds) {
+      await syncBarAmenities(barId);
+    }
+
+    return NextResponse.json({ success: true, message: `${reviewIds.length} reviews successfully purged.` });
+  } catch (error) {
+    console.error('Error bulk deleting reviews:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+}
+
 // Utility to aggregate and sync all unique amenities from reviews back to the parent bar
 async function syncBarAmenities(barId: string) {
   try {

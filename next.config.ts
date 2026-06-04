@@ -6,7 +6,7 @@ let version = "1.2.0";
 try {
   const commitCount = execSync("git rev-list --count HEAD", { encoding: "utf-8" }).trim();
   version = `1.2.${commitCount}`;
-} catch (error) {
+} catch {
   console.warn("Could not determine git commit count, defaulting version to 1.2.0");
 }
 

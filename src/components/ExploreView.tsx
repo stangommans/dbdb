@@ -1,5 +1,6 @@
 "use client";
 
+import Image from 'next/image';
 import { CURRENCIES, convertFromBase } from '@/lib/currency';
 
 interface Review {
@@ -85,8 +86,6 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
         /* Bento Responsive Grid */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {bars.map((bar, barIdx) => {
-            const hasReviews = bar.reviewCount > 0;
-            
             // Check if any review has an uploaded photo
             const uploadedPhoto = bar.reviews.find((r) => r.photoUrl)?.photoUrl;
             const heroImage = uploadedPhoto || getAtmosphericImg(bar.id, barIdx);
@@ -100,15 +99,18 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
               <div
                 key={bar.id}
                 onClick={() => onBarSelect(bar.id)}
-                className={`glass-panel rounded-2xl overflow-hidden group cursor-pointer hover:border-primary-container/30 transition-all duration-300 hover:-translate-y-1 shadow-lg hover:shadow-black/50 select-none
+                className={`glass-panel rounded-2xl overflow-hidden group cursor-pointer hover:border-primary-container/30 transition-all duration-300 shadow-lg hover:shadow-black/50 select-none
                   ${selectedBarId === bar.id ? "border-primary-container ring-1 ring-primary-container/20" : ""}`}
               >
                 {/* Visual Header */}
                 <div className="h-44 w-full relative overflow-hidden bg-surface-container-lowest">
-                  <img
+                  <Image
                     src={heroImage}
                     alt={bar.name}
-                    className="w-full h-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                    fill
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    unoptimized
+                    className="object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                   />
                   {/* Rating Badge */}
                   <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-md px-2.5 py-1 rounded-xl text-[18px] font-bold font-display border border-white/10 flex items-center gap-1">

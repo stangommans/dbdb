@@ -1,6 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { CURRENCIES, convertFromBase } from "@/lib/currency";
+import VesselIcon from "@/components/VesselIcon";
 
 interface Review {
   id: string;
@@ -10,6 +13,11 @@ interface Review {
   photoUrl: string | null;
   reviewerToken: string;
   createdAt: string;
+  vessel?: string | null;
+  vesselSize?: string | null;
+  vesselSizeMl?: number | null;
+  purchasePrice?: number | null;
+  purchaseCurrency?: string | null;
 }
 
 interface Bar {
@@ -27,54 +35,38 @@ interface ProfileViewProps {
   bars: Bar[];
   reviewerToken: string | null;
   savedBarCount: number;
-  adminPasscode: string | null;
-  onAdminUnlock: (passcode: string | null) => void;
+  activeCurrency?: string;
+  onBarSelect?: (barId: string) => void;
+  onReviewDeleted?: () => void;
 }
 
 export default function ProfileView({ 
   bars, 
   reviewerToken, 
   savedBarCount,
-  adminPasscode,
-  onAdminUnlock
+  activeCurrency = 'EUR',
+  onBarSelect,
+  onReviewDeleted,
 }: ProfileViewProps) {
+  const router = useRouter();
   const [copied, setCopied] = useState(false);
-  const [inputPasscode, setInputPasscode] = useState("");
-  const [isValidating, setIsValidating] = useState(false);
-  const [adminError, setAdminError] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const handleAdminSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!inputPasscode.trim()) return;
-
-    setIsValidating(true);
-    setAdminError(false);
-
-    try {
-      const res = await fetch("/api/admin/verify", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ passcode: inputPasscode }),
-      });
-
-      if (res.ok) {
-        onAdminUnlock(inputPasscode);
-        setInputPasscode("");
-      } else {
-        setAdminError(true);
-      }
-    } catch (err) {
-      console.error("Admin verification error:", err);
-      setAdminError(true);
-    } finally {
-      setIsValidating(false);
-    }
-  };
-
-  // Calculate user contributions
+  // Extract and enrich user's reviews with bar details
   const userReviews = bars.flatMap((bar) =>
-    (bar.reviews || []).filter((review) => review.reviewerToken === reviewerToken)
+    (bar.reviews || [])
+      .filter((review) => review.reviewerToken === reviewerToken)
+      .map((review) => ({
+        ...review,
+        barId: bar.id,
+        barName: bar.name,
+        barAddress: bar.address,
+      }))
   );
+
+  // Sort by newest first
+  userReviews.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   const reviewsCount = userReviews.length;
   const photosCount = userReviews.filter((r) => r.photoUrl).length;
@@ -85,6 +77,41 @@ export default function ProfileView({
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const handleDeleteReview = async (reviewId: string) => {
+    if (!window.confirm("Are you sure you want to permanently delete this review?")) return;
+
+    setDeletingId(reviewId);
+    try {
+      const res = await fetch(`/api/reviews/${reviewId}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        if (onReviewDeleted) {
+          onReviewDeleted();
+        }
+      } else {
+        const errData = await res.json();
+        alert(errData.error || "Failed to delete review.");
+      }
+    } catch (error) {
+      console.error("Error deleting review:", error);
+      alert("An unexpected error occurred while deleting the review.");
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  // Pagination logic
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(reviewsCount / itemsPerPage) || 1;
+  const activePage = Math.min(currentPage, totalPages);
+  
+  const paginatedReviews = userReviews.slice(
+    (activePage - 1) * itemsPerPage,
+    activePage * itemsPerPage
+  );
 
   return (
     <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -98,10 +125,257 @@ export default function ProfileView({
         </p>
       </div>
 
-      {/* Grid container */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        {/* Token Credentials Card */}
-        <div className="md:col-span-8 space-y-6">
+      {/* 1. Contribution Stats Row (Top Full-width Row) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border border-white/5 bg-surface-container-low/30">
+          <span className="text-[14px] font-bold text-primary tracking-widest uppercase">
+            Reviewed
+          </span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="font-display text-4xl font-black text-white">
+              {reviewsCount}
+            </span>
+            <span className="text-[14px] text-on-surface-variant font-light">Dives rated</span>
+          </div>
+        </div>
+
+        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border border-white/5 bg-surface-container-low/30">
+          <span className="text-[14px] font-bold text-primary tracking-widest uppercase">
+            Photos
+          </span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="font-display text-4xl font-black text-white">
+              {photosCount}
+            </span>
+            <span className="text-[14px] text-on-surface-variant font-light">Images shared</span>
+          </div>
+        </div>
+
+        <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border border-white/5 bg-surface-container-low/30">
+          <span className="text-[14px] font-bold text-[#a3a3a3] tracking-widest uppercase">
+            Stashed
+          </span>
+          <div className="flex items-baseline gap-2 mt-2">
+            <span className="font-display text-4xl font-black text-white">
+              {savedBarCount}
+            </span>
+            <span className="text-[14px] text-on-surface-variant font-light">Saved retreats</span>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. Main Grid Container */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        
+        {/* Left Column: Your Submitted Reviews Feed */}
+        <div className="lg:col-span-8 space-y-6">
+          <div className="glass-panel p-6 rounded-2xl space-y-5">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+              <h3 className="font-display text-xl font-bold text-white tracking-tight flex items-center gap-2">
+                <span className="material-symbols-outlined text-primary text-[22px]">rate_review</span>
+                Your Submitted Reviews
+              </h3>
+              <span className="text-[14px] text-on-surface-variant font-bold bg-white/5 px-3 py-1 rounded-full uppercase tracking-wider">
+                {reviewsCount} Review{reviewsCount === 1 ? '' : 's'}
+              </span>
+            </div>
+
+            {reviewsCount === 0 ? (
+              <div className="py-12 px-4 text-center space-y-3.5 bg-surface-container-low/20 border border-dashed border-white/5 rounded-xl">
+                <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 text-on-surface-variant">
+                  <span className="material-symbols-outlined text-[26px]">chat_bubble_outline</span>
+                </div>
+                <div>
+                  <h4 className="font-display text-[18px] font-bold text-white">No reviews found</h4>
+                  <p className="text-[18px] text-on-surface-variant font-light max-w-sm mx-auto mt-1">
+                    Explore the map, click on a spot, and share your first dive review to see it listed here!
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {paginatedReviews.map((review) => {
+                  const reviewDate = new Date(review.createdAt).toLocaleDateString(undefined, {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  });
+
+                  const activeCurr = activeCurrency;
+                  const currencySymbol = CURRENCIES.find(c => c.code === activeCurr)?.symbol || '€';
+                  
+                  let formattedPrice = '';
+                  if (review.purchasePrice !== null && review.purchasePrice !== undefined) {
+                    formattedPrice = `${currencySymbol}${review.purchasePrice.toFixed(2)}`;
+                  }
+
+                  return (
+                    <div 
+                      key={review.id} 
+                      className="bg-surface-container-low/40 border border-white/5 p-4 rounded-xl space-y-3 hover:border-white/10 transition-colors"
+                    >
+                      {/* Review Card Header */}
+                      <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
+                        <div>
+                          <h4 
+                            onClick={() => onBarSelect && onBarSelect(review.barId)}
+                            className="font-display text-lg font-bold text-white hover:text-primary transition-colors cursor-pointer inline-block"
+                          >
+                            {review.barName}
+                          </h4>
+                          <p className="text-[14px] text-on-surface-variant mt-0.5 font-light">
+                            {review.barAddress}
+                          </p>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 self-start sm:self-center">
+                          {/* Rating Badge */}
+                          <div className="bg-black/60 px-2.5 py-1 rounded-lg text-[14px] font-bold font-display border border-white/5 flex items-center gap-1 shrink-0">
+                            <span className="text-primary text-[14px]">★</span>
+                            <span className="text-white">{review.diveScore.toFixed(1)}</span>
+                          </div>
+                          
+                          {/* Date Label */}
+                          <span className="text-[12px] text-on-surface-variant font-light bg-white/5 px-2 py-1 rounded shrink-0">
+                            {reviewDate}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Drink Specifications (if present) */}
+                      {(review.vessel || review.vesselSize || formattedPrice) && (
+                        <div className="inline-flex flex-wrap items-center gap-2 text-[14px] font-bold tracking-wide text-primary-container bg-primary-container/10 px-3 py-1.5 rounded-lg">
+                          <VesselIcon vessel={review.vessel} className="w-3.5 h-3.5" />
+                          <span className="capitalize">{review.vessel || 'Drink'}</span>
+                          {review.vesselSize && <span className="opacity-60">({review.vesselSize})</span>}
+                          {formattedPrice && (
+                            <>
+                              <span className="opacity-40">•</span>
+                              <span>{formattedPrice}</span>
+                            </>
+                          )}
+                          {review.pricePerMl !== null && review.pricePerMl !== undefined && (() => {
+                            const rate = convertFromBase(review.pricePerMl, activeCurr);
+                            return (
+                              <>
+                                <span className="opacity-40">•</span>
+                                <span className="text-[13px] opacity-75">{(rate * 100).toFixed(1)}c/ml</span>
+                              </>
+                            );
+                          })()}
+                        </div>
+                      )}
+
+                      {/* Review Comment text & optional photo preview */}
+                      <div className="flex gap-4 items-start justify-between">
+                        {review.comment && (
+                          <blockquote className="flex-grow text-[16px] text-on-surface-variant font-light leading-relaxed border-l-2 border-primary/20 pl-3 italic">
+                            &ldquo;{review.comment}&rdquo;
+                          </blockquote>
+                        )}
+                        
+                        {review.photoUrl && (
+                          <a 
+                            href={review.photoUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="shrink-0 w-16 h-16 relative rounded-lg overflow-hidden border border-white/10 hover:border-primary/50 transition-colors"
+                            title="Open photo in new tab"
+                          >
+                            <img
+                              src={review.photoUrl}
+                              alt="Review upload preview"
+                              className="w-full h-full object-cover"
+                            />
+                          </a>
+                        )}
+                      </div>
+
+                      {/* Action buttons (Go to bar, Edit, Delete) */}
+                      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                        <button
+                          onClick={() => onBarSelect && onBarSelect(review.barId)}
+                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-white rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">map</span>
+                          Go to Bar
+                        </button>
+                        
+                        <button
+                          onClick={() => router.push(`/bar/${review.barId}/review/${review.id}`)}
+                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-primary rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">edit</span>
+                          Edit
+                        </button>
+                        
+                        <button
+                          onClick={() => handleDeleteReview(review.id)}
+                          disabled={deletingId === review.id}
+                          className="px-3 py-1.5 bg-red-955/20 border border-red-900/30 hover:bg-red-950/40 hover:border-red-900/50 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-red-400 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                          <span className="material-symbols-outlined text-[16px]">
+                            {deletingId === review.id ? "hourglass_empty" : "delete"}
+                          </span>
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Pagination Controls */}
+            {totalPages > 1 && (
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-white/5">
+                <span className="text-[14px] text-on-surface-variant font-light">
+                  Showing {Math.min((activePage - 1) * itemsPerPage + 1, reviewsCount)}–
+                  {Math.min(activePage * itemsPerPage, reviewsCount)} of {reviewsCount} reviews
+                </span>
+                
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                    disabled={activePage === 1}
+                    className="px-3 py-2 bg-surface-container-low border border-white/5 hover:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-[13px] font-bold tracking-widest uppercase rounded-lg flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                    Prev
+                  </button>
+                  
+                  {Array.from({ length: totalPages }).map((_, idx) => {
+                    const pageNum = idx + 1;
+                    return (
+                      <button
+                        key={pageNum}
+                        onClick={() => setCurrentPage(pageNum)}
+                        className={`w-9 h-9 font-display text-[14px] font-bold rounded-lg transition-all cursor-pointer border flex items-center justify-center
+                          ${activePage === pageNum 
+                            ? 'bg-primary border-primary text-black shadow-lg shadow-amber-500/10' 
+                            : 'bg-surface-container-low border-white/5 hover:border-white/15 text-white'}`}
+                      >
+                        {pageNum}
+                      </button>
+                    );
+                  })}
+
+                  <button
+                    onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                    disabled={activePage === totalPages}
+                    className="px-3 py-2 bg-surface-container-low border border-white/5 hover:border-white/10 disabled:opacity-30 disabled:cursor-not-allowed text-[13px] font-bold tracking-widest uppercase rounded-lg flex items-center gap-1 transition-all cursor-pointer"
+                  >
+                    Next
+                    <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* Right Column: Token Credentials Card */}
+        <div className="lg:col-span-4 space-y-6">
           <div className="glass-panel p-6 rounded-2xl space-y-4">
             <div>
               <h3 className="font-display text-xl font-bold text-white tracking-tight">
@@ -112,14 +386,14 @@ export default function ProfileView({
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-stretch gap-2.5">
-              <code className="flex-grow bg-surface-container-lowest border border-white/5 px-4 py-3.5 rounded-xl text-[18px] font-mono text-primary font-bold overflow-x-auto select-all flex items-center whitespace-nowrap min-h-[48px]">
+            <div className="flex flex-col gap-2.5">
+              <code className="bg-surface-container-lowest border border-white/5 px-4 py-3.5 rounded-xl text-[18px] font-mono text-primary font-bold overflow-x-auto select-all flex items-center whitespace-nowrap min-h-[48px]">
                 {reviewerToken || "Retrieving cryptographic signature..."}
               </code>
               <button
                 onClick={copyToken}
                 disabled={!reviewerToken}
-                className="px-5 py-3.5 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 font-display text-[18px] font-bold tracking-widest uppercase rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer disabled:opacity-50 shrink-0 flex items-center justify-center gap-2 min-h-[48px]"
+                className="w-full px-5 py-3.5 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 font-display text-[18px] font-bold tracking-widest uppercase rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2 min-h-[48px]"
               >
                 <span className="material-symbols-outlined text-[20px]">
                   {copied ? "check" : "content_copy"}
@@ -138,157 +412,8 @@ export default function ProfileView({
               </p>
             </div>
           </div>
-
-          {/* System Administration Override Gate */}
-          <div className="glass-panel p-6 rounded-2xl space-y-4">
-            <div>
-              <h3 className="font-display text-xl font-bold text-white tracking-tight">
-                System Administration
-              </h3>
-              <p className="text-[18px] font-bold text-primary tracking-widest uppercase mt-1">
-                Stateless Passcode Override Gate
-              </p>
-            </div>
-
-            {adminPasscode ? (
-              <div className="space-y-4 animate-in fade-in zoom-in-95 duration-200">
-                <div className="bg-surface-container-low border border-primary/20 p-4 rounded-xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  <div className="flex items-center gap-2.5">
-                    <span className="material-symbols-outlined text-primary text-[20px] animate-pulse">
-                      security
-                    </span>
-                    <div>
-                      <h4 className="text-[18px] font-bold text-white font-display uppercase tracking-wider">
-                        Admin overrides active
-                      </h4>
-                      <p className="text-[18px] text-on-surface-variant font-light mt-0.5">
-                        Passcode verified. Global delete overrides are now visible in detailed drawers.
-                      </p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => onAdminUnlock(null)}
-                    className="px-5 py-3.5 bg-neutral-800 hover:bg-neutral-700 active:scale-95 text-white font-display text-[18px] font-bold tracking-widest uppercase rounded-xl transition-all cursor-pointer flex items-center justify-center gap-2 shrink-0 min-h-[48px]"
-                  >
-                    <span className="material-symbols-outlined text-[20px]">lock</span>
-                    LOCK ACCESS
-                  </button>
-                </div>
-              </div>
-            ) : (
-              <form onSubmit={handleAdminSubmit} className="flex flex-col sm:flex-row items-stretch gap-2.5">
-                <div className="flex-grow relative">
-                  <input
-                    type="password"
-                    placeholder="Enter administrative passcode..."
-                    value={inputPasscode}
-                    disabled={isValidating}
-                    onChange={(e) => {
-                      setInputPasscode(e.target.value);
-                      setAdminError(false);
-                    }}
-                    className={`w-full bg-surface-container-lowest border ${adminError ? 'border-red-500/50 focus:border-red-500' : 'border-white/5 focus:border-primary/45'} px-4 py-3.5 rounded-xl text-[18px] font-sans text-white placeholder-neutral-500 focus:outline-none transition-colors min-h-[48px]`}
-                  />
-                  {adminError && (
-                    <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[18px] text-red-500 font-bold uppercase tracking-wider">
-                      Incorrect passcode
-                    </span>
-                  )}
-                </div>
-                <button
-                  type="submit"
-                  disabled={isValidating}
-                  className="px-5 py-3.5 bg-primary hover:brightness-110 active:scale-95 disabled:opacity-50 font-display text-[18px] font-bold text-on-primary tracking-widest uppercase rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer shrink-0 flex items-center justify-center gap-2 min-h-[48px]"
-                >
-                  <span className="material-symbols-outlined text-[20px]">
-                    {isValidating ? "sync" : "lock_open"}
-                  </span>
-                  {isValidating ? "VERIFYING..." : "UNLOCK SYSTEM"}
-                </button>
-              </form>
-            )}
-          </div>
         </div>
 
-        {/* Contribution Stats Panel */}
-        <div className="md:col-span-4 space-y-4">
-          <div className="glass-panel p-6 rounded-2xl space-y-5">
-            <p className="font-display text-[18px] font-bold text-primary tracking-widest uppercase border-b border-white/5 pb-2">
-              Contribution Stats
-            </p>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 md:grid-cols-1 gap-4">
-              {/* Stat 1 */}
-              <div className="bg-surface-container-low border border-white/5 p-4 rounded-xl text-center md:text-left flex flex-col justify-between">
-                <span className="text-[18px] text-on-surface-variant font-bold tracking-widest uppercase">
-                  Reviewed
-                </span>
-                <span className="font-display text-3xl font-extrabold text-white mt-1">
-                  {reviewsCount}
-                </span>
-                <span className="text-[18px] text-on-surface-variant mt-0.5 font-light">Dives rated</span>
-              </div>
-
-              {/* Stat 2 */}
-              <div className="bg-surface-container-low border border-white/5 p-4 rounded-xl text-center md:text-left flex flex-col justify-between">
-                <span className="text-[18px] text-on-surface-variant font-bold tracking-widest uppercase">
-                  Photos
-                </span>
-                <span className="font-display text-3xl font-extrabold text-white mt-1">
-                  {photosCount}
-                </span>
-                <span className="text-[18px] text-on-surface-variant mt-0.5 font-light">Images shared</span>
-              </div>
-
-              {/* Stat 3 */}
-              <div className="bg-surface-container-low border border-white/5 p-4 rounded-xl text-center md:text-left flex flex-col justify-between">
-                <span className="text-[18px] text-on-surface-variant font-bold tracking-widest uppercase">
-                  Stashed
-                </span>
-                <span className="font-display text-3xl font-extrabold text-white mt-1">
-                  {savedBarCount}
-                </span>
-                <span className="text-[18px] text-on-surface-variant mt-0.5 font-light">Saved retreats</span>
-              </div>
-            </div>
-          </div>
-
-          {/* App Information & Version Control Card */}
-          <div className="glass-panel p-6 rounded-2xl space-y-5 bg-surface-container-low/40">
-            <p className="font-display text-[18px] font-bold text-primary tracking-widest uppercase border-b border-white/5 pb-2">
-              About DBDB
-            </p>
-            <div className="space-y-4">
-              <div>
-                <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[12px]">Author</span>
-                <span className="text-white font-semibold text-[18px]">stan.gommans</span>
-              </div>
-              <div>
-                <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[12px]">Version</span>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="px-2.5 py-0.5 bg-primary/10 border border-primary/20 text-primary font-mono font-bold text-[14px] rounded">
-                    v{process.env.NEXT_PUBLIC_APP_VERSION || "1.0.8"}
-                  </span>
-                  <span className="text-on-surface-variant font-light text-[14px]">Release Line 1.x</span>
-                </div>
-              </div>
-              <div>
-                <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[12px]">Source Code</span>
-                <a
-                  href="https://github.com/stangommans/dbdb"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-primary hover:text-white font-bold transition-colors mt-1 text-[16px] group"
-                >
-                  <svg className="w-5 h-5 fill-current text-primary group-hover:text-white transition-colors" viewBox="0 0 24 24">
-                    <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>
-                  </svg>
-                  <span className="underline decoration-dashed decoration-primary/50 group-hover:decoration-white transition-all">github.com/stangommans/dbdb</span>
-                </a>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

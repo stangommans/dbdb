@@ -1,12 +1,89 @@
 "use client";
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import Script from 'next/script';
+
+interface Review {
+  id: string;
+  diveScore: number;
+  pricePerMl: number | null;
+  comment: string | null;
+  photoUrl: string | null;
+  reviewerToken: string;
+  createdAt: string;
+  amenities?: string | null;
+  vessel?: string | null;
+  vesselSize?: string | null;
+  vesselSizeMl?: number | null;
+  purchasePrice?: number | null;
+  purchaseCurrency?: string | null;
+}
+
+interface Bar {
+  id: string;
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  googlePlaceId: string | null;
+  amenities: string | null;
+  reviewCount: number;
+  averageDiveScore: number;
+  averagePricePerMl: number | null;
+  reviews: Review[];
+}
+
+interface GooglePlaceGeometry {
+  location?: {
+    lat: () => number;
+    lng: () => number;
+  };
+}
+
+interface GooglePlace {
+  name?: string;
+  formatted_address?: string;
+  geometry?: GooglePlaceGeometry;
+  place_id?: string;
+}
+
+interface GoogleAutocomplete {
+  addListener: (event: string, callback: () => void) => void;
+  getPlace: () => GooglePlace;
+}
+
+interface GoogleMapsPlaces {
+  Autocomplete: new (
+    input: HTMLInputElement,
+    options?: { types?: string[]; fields?: string[] }
+  ) => GoogleAutocomplete;
+}
+
+interface GoogleMaps {
+  maps: {
+    places: GoogleMapsPlaces;
+    event: {
+      clearInstanceListeners: (instance: unknown) => void;
+    };
+  };
+}
+
+interface CustomWindow extends Window {
+  google?: GoogleMaps;
+}
+
+interface GoogleBarImportData {
+  name: string;
+  address: string;
+  latitude: number;
+  longitude: number;
+  googlePlaceId: string | null;
+}
 
 interface AddBarSheetProps {
   isOpen: boolean;
   onClose: () => void;
-  onBarAdded: (newBar: any) => void;
+  onBarAdded: (newBar: Bar) => void;
   newPinCoords: { latitude: number; longitude: number } | null;
   onCancelNewPin: () => void;
 }
@@ -25,7 +102,7 @@ export default function AddBarSheet({
   const [googleLoading, setGoogleLoading] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
   const autocompleteInputRef = useRef<HTMLInputElement>(null);
-  const autocompleteRef = useRef<any>(null);
+  const autocompleteRef = useRef<GoogleAutocomplete | null>(null);
 
   // Manual Form states
   const [manualName, setManualName] = useState('');
@@ -49,16 +126,20 @@ export default function AddBarSheet({
   }, []);
 
   // Synchronize manual coordinates when a user drops a custom pin on the Leaflet map
-  useEffect(() => {
+  const [prevNewPinCoords, setPrevNewPinCoords] = useState(newPinCoords);
+  if (newPinCoords !== prevNewPinCoords) {
+    setPrevNewPinCoords(newPinCoords);
     if (newPinCoords) {
       setActiveTab('manual');
       setManualLat(newPinCoords.latitude.toFixed(6));
       setManualLng(newPinCoords.longitude.toFixed(6));
     }
-  }, [newPinCoords]);
+  }
 
-  // Reset states and cleanup autocomplete on drawer close
-  useEffect(() => {
+  // Reset inputs when the drawer is closed (state synchronization during rendering)
+  const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
+  if (isOpen !== prevIsOpen) {
+    setPrevIsOpen(isOpen);
     if (!isOpen) {
       setGoogleSearchQuery('');
       setGoogleError(null);
@@ -67,77 +148,28 @@ export default function AddBarSheet({
       setManualLat('');
       setManualLng('');
       setManualError(null);
+    }
+  }
 
-      // Clean up autocomplete listeners and references
-      if (autocompleteRef.current && (window as any).google) {
-        try {
-          (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        } catch (e) {
-          console.error('Error cleaning up autocomplete listeners:', e);
+  // Reset states and cleanup autocomplete on drawer close
+  useEffect(() => {
+    if (!isOpen) {
+      if (typeof window !== 'undefined') {
+        const customWindow = window as unknown as CustomWindow;
+        if (autocompleteRef.current && customWindow.google) {
+          try {
+            customWindow.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+          } catch (e) {
+            console.error('Error cleaning up autocomplete listeners:', e);
+          }
         }
       }
       autocompleteRef.current = null;
     }
   }, [isOpen]);
 
-  // Initializing Google Places Autocomplete once the script loads
-  const initAutocomplete = () => {
-    if (!autocompleteInputRef.current || !(window as any).google) return;
-
-    try {
-      // Ensure any legacy instances are fully cleared before attaching to the new input ref
-      if (autocompleteRef.current && (window as any).google) {
-        try {
-          (window as any).google.maps.event.clearInstanceListeners(autocompleteRef.current);
-        } catch (e) {
-          console.error(e);
-        }
-      }
-
-      const autocomplete = new (window as any).google.maps.places.Autocomplete(
-        autocompleteInputRef.current,
-        {
-          types: ['establishment'],
-          fields: ['name', 'formatted_address', 'geometry', 'place_id']
-        }
-      );
-
-      autocomplete.addListener('place_changed', async () => {
-        const place = autocomplete.getPlace();
-        if (!place.geometry || !place.geometry.location) {
-          setGoogleError('Failed to capture coordinates for this place. Try manual entry.');
-          return;
-        }
-
-        const barData = {
-          name: place.name || '',
-          address: place.formatted_address || '',
-          latitude: place.geometry.location.lat(),
-          longitude: place.geometry.location.lng(),
-          googlePlaceId: place.place_id || null
-        };
-
-        await importGoogleBar(barData);
-      });
-
-      autocompleteRef.current = autocomplete;
-    } catch (err) {
-      console.error('Error initializing autocomplete:', err);
-    }
-  };
-
-  // Re-initialize autocomplete if sheet opens and the Google SDK script is already cached
-  useEffect(() => {
-    if (isOpen && (window as any).google) {
-      const timer = setTimeout(() => {
-        initAutocomplete();
-      }, 50);
-      return () => clearTimeout(timer);
-    }
-  }, [isOpen]);
-
   // Import bar into SQLite via api
-  const importGoogleBar = async (barData: any) => {
+  const importGoogleBar = useCallback(async (barData: GoogleBarImportData) => {
     setGoogleLoading(true);
     setGoogleError(null);
     try {
@@ -155,12 +187,74 @@ export default function AddBarSheet({
 
       onBarAdded(data);
       onClose();
-    } catch (err: any) {
-      setGoogleError(err.message || 'An error occurred during import.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during import.';
+      setGoogleError(errorMessage);
     } finally {
       setGoogleLoading(false);
     }
-  };
+  }, [onBarAdded, onClose]);
+
+  // Initializing Google Places Autocomplete once the script loads
+  const initAutocomplete = useCallback(() => {
+    if (typeof window === 'undefined' || !autocompleteInputRef.current) return;
+    const customWindow = window as unknown as CustomWindow;
+    if (!customWindow.google) return;
+
+    try {
+      // Ensure any legacy instances are fully cleared before attaching to the new input ref
+      if (autocompleteRef.current) {
+        try {
+          customWindow.google.maps.event.clearInstanceListeners(autocompleteRef.current);
+        } catch (e) {
+          console.error(e);
+        }
+      }
+
+      const autocomplete = new customWindow.google.maps.places.Autocomplete(
+        autocompleteInputRef.current,
+        {
+          types: ['establishment'],
+          fields: ['name', 'formatted_address', 'geometry', 'place_id']
+        }
+      );
+
+      autocomplete.addListener('place_changed', async () => {
+        const place = autocomplete.getPlace();
+        if (!place.geometry || !place.geometry.location) {
+          setGoogleError('Failed to capture coordinates for this place. Try manual entry.');
+          return;
+        }
+
+        const barData: GoogleBarImportData = {
+          name: place.name || '',
+          address: place.formatted_address || '',
+          latitude: place.geometry.location.lat(),
+          longitude: place.geometry.location.lng(),
+          googlePlaceId: place.place_id || null
+        };
+
+        await importGoogleBar(barData);
+      });
+
+      autocompleteRef.current = autocomplete;
+    } catch (err) {
+      console.error('Error initializing autocomplete:', err);
+    }
+  }, [importGoogleBar]);
+
+  // Re-initialize autocomplete if sheet opens and the Google SDK script is already cached
+  useEffect(() => {
+    if (isOpen && typeof window !== 'undefined') {
+      const customWindow = window as unknown as CustomWindow;
+      if (customWindow.google) {
+        const timer = setTimeout(() => {
+          initAutocomplete();
+        }, 50);
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [isOpen, initAutocomplete]);
 
   // Manual Bar Form submit handler
   const handleManualSubmit = async (e: React.FormEvent) => {
@@ -208,8 +302,9 @@ export default function AddBarSheet({
       onBarAdded(data);
       onClose();
       onCancelNewPin(); // Remove manual map pin
-    } catch (err: any) {
-      setManualError(err.message || 'An error occurred.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred.';
+      setManualError(errorMessage);
     } finally {
       setManualLoading(false);
     }
@@ -292,9 +387,9 @@ export default function AddBarSheet({
                 // Setup alert when API Key is missing in development
                 <div className="p-5 bg-amber-950/40 border border-amber-900/60 rounded-xl space-y-3 text-[18px] leading-relaxed text-amber-200">
                   <h4 className="font-bold text-amber-400 text-[18px] uppercase tracking-wider">Google Places API key missing</h4>
-                  <p>To enable location searching & instant imports, add your key to `.env`:</p>
+                  <p>To enable location searching &amp; instant imports, add your key to `.env`:</p>
                   <pre className="bg-neutral-950 p-3 rounded border border-neutral-800 text-[15px] select-all overflow-x-auto text-amber-300">
-                    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-key-here"
+                    NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=&quot;your-key-here&quot;
                   </pre>
                   <p>In the meantime, you can switch to the <strong>Manual Pin</strong> tab above to add bars without a key!</p>
                 </div>
@@ -318,7 +413,7 @@ export default function AddBarSheet({
                     )}
                   </div>
                   <p className="text-[18px] text-neutral-500 leading-relaxed mt-2">
-                    Start typing the bar's name. Selecting a bar from the list will instantly fetch its official coordinates and details, and pin it to the map.
+                    Start typing the bar&apos;s name. Selecting a bar from the list will instantly fetch its official coordinates and details, and pin it to the map.
                   </p>
                 </div>
               )}

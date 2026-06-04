@@ -1,5 +1,7 @@
 "use client";
 
+import Image from 'next/image';
+
 interface Review {
   id: string;
   diveScore: number;
@@ -129,10 +131,13 @@ export default function StashView({ bars, savedBarIds, onBarSelect, onRemoveBar 
                     onClick={() => onBarSelect(bar.id)}
                     className="relative h-20 w-20 md:h-24 md:w-24 shrink-0 rounded-xl overflow-hidden border border-white/10 cursor-pointer"
                   >
-                    <img
+                    <Image
                       src={heroImage}
                       alt={bar.name}
-                      className="h-full w-full object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
+                      fill
+                      sizes="(max-width: 768px) 80px, 96px"
+                      unoptimized
+                      className="object-cover grayscale-[0.25] group-hover:grayscale-0 group-hover:scale-105 transition-all duration-500"
                     />
                   </div>
 

@@ -1,7 +1,25 @@
 "use client";
 
 import { useState, useRef } from 'react';
+import Image from 'next/image';
 import { CURRENCIES, convertToBase } from '@/lib/currency';
+import { resizeImage } from '@/lib/image';
+
+interface Review {
+  id: string;
+  diveScore: number;
+  pricePerMl: number | null;
+  comment: string | null;
+  photoUrl: string | null;
+  reviewerToken: string;
+  createdAt: string;
+  amenities?: string | null;
+  vessel?: string | null;
+  vesselSize?: string | null;
+  vesselSizeMl?: number | null;
+  purchasePrice?: number | null;
+  purchaseCurrency?: string | null;
+}
 
 interface ReviewFormProps {
   barId: string;
@@ -20,7 +38,7 @@ interface ReviewFormProps {
     purchaseCurrency?: string | null;
   } | null;
   onClose: () => void;
-  onReviewSubmitted: (review: any) => void;
+  onReviewSubmitted: (review: Review) => void;
 }
 
 const AMENITIES_OPTIONS = [
@@ -102,8 +120,25 @@ export default function ReviewForm({
     setUploading(true);
     setUploadError(null);
 
+    // Resize client-side first
+    let uploadFile: File | Blob = file;
+    let uploadName = file.name;
+
+    try {
+      const resizedBlob = await resizeImage(file, {
+        maxWidth: 1200,
+        maxHeight: 1200,
+        quality: 0.85
+      });
+      uploadFile = resizedBlob;
+      const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
+      uploadName = `${baseName}.jpg`;
+    } catch (resizeErr) {
+      console.warn('Client-side resizing failed, falling back to original file:', resizeErr);
+    }
+
     const formData = new FormData();
-    formData.append('file', file);
+    formData.append('file', uploadFile, uploadName);
 
     try {
       const res = await fetch('/api/upload', {
@@ -117,8 +152,9 @@ export default function ReviewForm({
       }
 
       setPhotoUrl(data.url);
-    } catch (err: any) {
-      setUploadError(err.message || 'An error occurred during upload.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during upload.';
+      setUploadError(errorMessage);
     } finally {
       setUploading(false);
     }
@@ -176,8 +212,9 @@ export default function ReviewForm({
 
       onReviewSubmitted(data);
       onClose();
-    } catch (err: any) {
-      setSubmitError(err.message || 'An error occurred during submission.');
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'An error occurred during submission.';
+      setSubmitError(errorMessage);
     } finally {
       setSubmitting(false);
     }
@@ -418,10 +455,13 @@ export default function ReviewForm({
                 {photoUrl ? (
                   // Loaded Photo Preview
                   <div className="relative rounded-xl border border-neutral-800 overflow-hidden bg-neutral-900/40 h-36 flex items-center justify-center">
-                    <img
+                    <Image
                       src={photoUrl}
                       alt="Upload Preview"
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="(max-width: 480px) 100vw, 480px"
+                      unoptimized
+                      className="object-cover"
                     />
                     <button
                       type="button"

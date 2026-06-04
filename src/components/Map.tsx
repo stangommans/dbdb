@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
@@ -17,6 +17,16 @@ const createNeonPin = (diveScore: number = 0) => {
   return L.divIcon({
     className: 'custom-neon-pin',
     html: `<div class="neon-pin-wrapper"><span class="neon-pin-core ${glowClass}"></span></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12]
+  });
+};
+
+// Custom User Location Pin Icon creator
+const createUserLocationPin = () => {
+  return L.divIcon({
+    className: 'user-location-pin',
+    html: `<div class="user-pin-wrapper"><span class="user-pin-pulse"></span><span class="user-pin-core"></span></div>`,
     iconSize: [24, 24],
     iconAnchor: [12, 12]
   });
@@ -45,10 +55,19 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
   const newPinMarkerRef = useRef<L.Marker | null>(null);
+  const userLocationMarkerRef = useRef<L.Marker | null>(null);
+
+  const [hasCenteredOnUser, setHasCenteredOnUser] = useState(false);
+
+  const onMapClickRef = useRef(onMapClick);
+  useEffect(() => {
+    onMapClickRef.current = onMapClick;
+  }, [onMapClick]);
 
   // Initial map shell load
   useEffect(() => {
     if (!mapContainerRef.current) return;
+    let isMounted = true;
 
     // Centered on Amsterdam by default
     const map = L.map(mapContainerRef.current, {
@@ -71,17 +90,42 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     mapRef.current = map;
 
     // Click on map to capture custom coordinate locations
-    if (onMapClick) {
-      map.on('click', (e: L.LeafletMouseEvent) => {
-        onMapClick(e.latlng.lat, e.latlng.lng);
-      });
+    map.on('click', (e: L.LeafletMouseEvent) => {
+      onMapClickRef.current?.(e.latlng.lat, e.latlng.lng);
+    });
+
+    // Try to automatically center around the user's location on mount
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          if (!isMounted) return;
+          const { latitude, longitude } = position.coords;
+          map.setView([latitude, longitude], 14, { animate: true });
+          
+          // Add user pin
+          const marker = L.marker([latitude, longitude], {
+            icon: createUserLocationPin()
+          }).addTo(map);
+          userLocationMarkerRef.current = marker;
+          setHasCenteredOnUser(true);
+        },
+        (error) => {
+          console.warn("Could not retrieve user location on mount:", error);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
     }
 
     return () => {
+      isMounted = false;
       map.remove();
       mapRef.current = null;
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.remove();
+        userLocationMarkerRef.current = null;
+      }
     };
-  }, [onMapClick]);
+  }, []);
 
   // Sync database bar pins
   useEffect(() => {
@@ -133,10 +177,10 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     });
 
     // Automatically zoom and fit to encapsulate all active pins when no bar is focused
-    if (bounds.length > 0 && !selectedBarId && !newPinCoords) {
+    if (bounds.length > 0 && !selectedBarId && !newPinCoords && !hasCenteredOnUser) {
       map.fitBounds(bounds, { padding: [50, 50] });
     }
-  }, [bars, onBarSelect, selectedBarId, newPinCoords]);
+  }, [bars, onBarSelect, selectedBarId, newPinCoords, hasCenteredOnUser]);
 
   // React to selected bar zooms
   useEffect(() => {
@@ -182,9 +226,50 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     }
   }, [newPinCoords]);
 
+  // Locate the user manually via the GPS button
+  const handleLocate = () => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const { latitude, longitude } = position.coords;
+          map.setView([latitude, longitude], 15, { animate: true });
+          
+          if (userLocationMarkerRef.current) {
+            userLocationMarkerRef.current.setLatLng([latitude, longitude]);
+          } else {
+            const marker = L.marker([latitude, longitude], {
+              icon: createUserLocationPin()
+            }).addTo(map);
+            userLocationMarkerRef.current = marker;
+          }
+          setHasCenteredOnUser(true);
+        },
+        (error) => {
+          alert("Could not retrieve your location. Please check your browser permissions.");
+          console.warn("Could not retrieve user location manually:", error);
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  };
+
   return (
     <div className="relative w-full h-full">
       <div ref={mapContainerRef} className="w-full h-full bg-neutral-950" />
+      
+      {/* GPS Locate Button */}
+      <button
+        onClick={handleLocate}
+        className="absolute top-[86px] right-[10px] z-[400] h-[30px] w-[30px] rounded-[4px] bg-[#1c1b1b]/95 border border-white/10 text-neutral-300 hover:text-white active:scale-95 flex items-center justify-center transition-all cursor-pointer shadow-md shadow-black/80"
+        title="Show my location"
+      >
+        <span className="material-symbols-outlined text-[16px]">my_location</span>
+      </button>
     </div>
   );
 }
