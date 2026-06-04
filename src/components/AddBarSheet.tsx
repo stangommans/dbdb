@@ -334,14 +334,12 @@ export default function AddBarSheet({
       {/* Responsive Slide-Over Drawer */}
       <div
         className={`fixed z-[1000] transition-all duration-300 ease-out border-neutral-800/80 bg-neutral-900/90 backdrop-blur-xl shadow-2xl flex flex-col
-          bottom-0 left-0 w-full h-[85vh] rounded-t-2xl border-t border-x
+          max-md:inset-0 max-md:w-full max-md:h-dvh max-md:rounded-none max-md:border-none
           md:top-0 md:right-0 md:left-auto md:w-[460px] md:h-full md:rounded-none md:border-l md:border-t-0`}
       >
-        {/* Drag handle indicator on mobile layout */}
-        <div className="w-12 h-1 bg-neutral-800 rounded-full mx-auto my-3 md:hidden" />
 
         {/* Header */}
-        <div className="px-8 py-6 border-b border-neutral-800/60 flex items-center justify-between">
+        <div className="px-8 py-6 max-md:px-5 max-md:py-4 border-b border-neutral-800/60 flex items-center justify-between">
           <div>
             <h2 className="text-[24px] font-bold tracking-tight text-white font-sans">Add a Dive Bar</h2>
             <p className="text-[18px] text-neutral-400 mt-1">Plot a new local watering hole on the map.</p>
@@ -358,10 +356,10 @@ export default function AddBarSheet({
         </div>
 
         {/* Tab Headers */}
-        <div className="flex px-8 pt-4 border-b border-neutral-800/40 text-[18px]">
+        <div className="flex px-8 max-md:px-5 pt-4 max-md:pt-3 border-b border-neutral-800/40 text-[18px]">
           <button
             onClick={() => setActiveTab('google')}
-            className={`flex-1 pb-4 text-center font-bold border-b-2 transition-all duration-150
+            className={`flex-1 pb-4 max-md:pb-3 text-center font-bold border-b-2 transition-all duration-150
               ${activeTab === 'google'
                 ? 'border-amber-500 text-amber-500'
                 : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}
@@ -370,7 +368,7 @@ export default function AddBarSheet({
           </button>
           <button
             onClick={() => setActiveTab('manual')}
-            className={`flex-1 pb-4 text-center font-bold border-b-2 transition-all duration-150
+            className={`flex-1 pb-4 max-md:pb-3 text-center font-bold border-b-2 transition-all duration-150
               ${activeTab === 'manual'
                 ? 'border-amber-500 text-amber-500'
                 : 'border-transparent text-neutral-400 hover:text-neutral-200'}`}
@@ -380,7 +378,7 @@ export default function AddBarSheet({
         </div>
 
         {/* Sheet Content Body */}
-        <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
+        <div className="flex-1 overflow-y-auto p-8 max-md:p-5 custom-scrollbar">
           {activeTab === 'google' ? (
             <div className="space-y-6">
               {!apiKey ? (
@@ -516,7 +514,7 @@ export default function AddBarSheet({
               <button
                 type="submit"
                 disabled={manualLoading}
-                className="w-full mt-6 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black py-4 px-6 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center text-[18px] min-h-[56px]"
+                className="w-full mt-6 max-md:mt-4 bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black py-4 px-6 max-md:py-3 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center text-[18px] min-h-[56px] max-md:min-h-[48px]"
               >
                 {manualLoading ? (
                   <span className="flex h-5 w-5 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent" />

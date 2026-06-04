@@ -494,8 +494,8 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
           {/* Floating Sidebar overlays */}
           <div className={`absolute left-6 top-6 bottom-6 z-[450] w-[450px] max-w-[calc(100vw-48px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300 transform translate-z-0
             ${isMobileListOpen
-              ? 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-0 max-md:opacity-100'
-              : 'max-md:left-4 max-md:right-4 max-md:top-4 max-md:bottom-4 max-md:w-auto max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
+              ? 'max-md:left-0 max-md:right-0 max-md:top-0 max-md:bottom-0 max-md:w-full max-md:h-dvh max-md:max-h-dvh max-md:rounded-none max-md:border-none max-md:max-w-none max-md:translate-x-0 max-md:opacity-100'
+              : 'max-md:left-0 max-md:right-0 max-md:top-0 max-md:bottom-0 max-md:w-full max-md:h-dvh max-md:max-h-dvh max-md:rounded-none max-md:border-none max-md:max-w-none max-md:translate-x-[-120%] max-md:opacity-0 max-md:pointer-events-none'
             }
           `}>
             <div className="p-5 border-b border-white/5 bg-surface-container-lowest/20 flex flex-col gap-4 flex-shrink-0">
@@ -536,7 +536,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto p-6 space-y-4 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto p-6 max-md:px-margin-mobile max-md:py-4 space-y-4 max-md:space-y-3 custom-scrollbar">
               {loading ? (
                 <div className="h-full flex items-center justify-center text-[18px] text-on-surface-variant">
                   <span className="flex h-5 w-5 animate-spin rounded-full border-2 border-primary-container border-t-transparent mr-3" />
@@ -564,7 +564,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
                         router.push(`/bar/${bar.id}`);
                         setIsMobileListOpen(false);
                       }}
-                      className={`p-5 rounded-2xl border transition-all cursor-pointer select-none group relative overflow-hidden
+                      className={`p-5 max-md:p-4 rounded-2xl max-md:rounded-xl border transition-all cursor-pointer select-none group relative overflow-hidden
                         ${active
                           ? 'border-primary-container bg-primary-container/5 shadow-lg'
                           : 'border-white/5 bg-surface-container-low/40 hover:border-white/10 hover:bg-surface-container-low'}`}
@@ -667,9 +667,9 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
         {selectedBar && (
           <div
             className="absolute right-6 top-6 bottom-6 z-[550] w-[460px] max-w-[calc(100vw-32px)] glass-panel rounded-2xl flex flex-col shadow-2xl transition-all duration-300
-              max-md:left-4 max-md:right-4 max-md:top-0 max-md:bottom-0 max-md:w-auto max-md:h-[100dvh] transform translate-z-0"
+              max-md:left-0 max-md:right-0 max-md:bottom-0 max-md:top-0 max-md:w-full max-md:h-dvh max-md:max-h-dvh max-md:rounded-none max-md:border-none max-md:max-w-none transform translate-z-0"
           >
-            <div className="px-6 py-5 border-b border-white/5 flex items-center justify-between flex-shrink-0 bg-surface-container-lowest/20 gap-3">
+            <div className="px-6 py-5 max-md:px-5 max-md:py-4 border-b border-white/5 flex items-center justify-between flex-shrink-0 bg-surface-container-lowest/20 gap-3">
               <div className="truncate pr-4">
                 <h2 className="font-display text-[22px] font-black text-white truncate">{selectedBar.name}</h2>
                 <p className="text-[18px] text-on-surface-variant font-normal truncate mt-1">{selectedBar.address}</p>
@@ -704,7 +704,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               </div>
             </div>
 
-            <div className="flex-grow overflow-y-auto p-6 pb-20 md:pb-6 space-y-6 custom-scrollbar">
+            <div className="flex-grow overflow-y-auto p-6 max-md:p-5 pb-20 md:pb-6 space-y-6 max-md:space-y-4.5 custom-scrollbar">
               <div className="grid grid-cols-2 gap-4">
                 <div className="col-span-2 p-5 bg-surface-container-low border border-white/5 rounded-2xl flex flex-col justify-between min-h-[140px]">
                   <span className="text-[18px] font-bold uppercase tracking-widest text-primary">Dive Score</span>
@@ -960,8 +960,8 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
 
       {/* 6. WRITE / EDIT DIVE REVIEW SHEET */}
       {isReviewOpen && selectedBar && (
-        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="w-full max-w-[480px] max-h-[calc(100dvh-32px)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 max-md:p-0 bg-black/60 backdrop-blur-sm">
+          <div className="w-full max-w-[480px] max-h-[calc(100dvh-32px)] max-md:max-h-dvh max-md:h-dvh max-md:fixed max-md:top-0 max-md:bottom-0 max-md:left-0 max-md:right-0 max-md:w-full max-md:max-w-none flex flex-col animate-in fade-in zoom-in-95 duration-200">
             <ReviewForm
               barId={selectedBar.id}
               barName={selectedBar.name}
@@ -1000,11 +1000,11 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
       {/* 8. REVIEW DETAIL MODAL (READ-ONLY OVERLAY FOR OTHERS' REVIEWS) */}
       {viewReview && selectedBar && (
         <div 
-          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
+          className="fixed inset-0 z-[1000] flex items-center justify-center p-4 max-md:p-0 bg-black/60 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => router.push(`/bar/${selectedBar.id}`)}
         >
           <div 
-            className="w-full max-w-[480px] bg-[#181818] border border-white/5 rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar"
+            className="w-full max-w-[480px] bg-[#181818] border border-white/5 rounded-2xl shadow-2xl p-6 flex flex-col gap-5 animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto custom-scrollbar max-md:fixed max-md:inset-0 max-md:w-full max-md:max-w-none max-md:h-dvh max-md:max-h-dvh max-md:rounded-none max-md:border-none"
             onClick={(e) => e.stopPropagation()}
           >
             {/* Modal Header */}

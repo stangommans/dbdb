@@ -114,9 +114,9 @@ export default function ProfileView({
   );
 
   return (
-    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+    <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop max-md:px-0 pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Intro section */}
-      <div className="mb-8">
+      <div className="mb-8 max-md:px-margin-mobile">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
           Anonymous Profile
         </h2>
@@ -126,7 +126,7 @@ export default function ProfileView({
       </div>
 
       {/* 1. Contribution Stats Row (Top Full-width Row) */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 max-md:px-margin-mobile">
         <div className="glass-panel p-5 rounded-2xl flex flex-col justify-between border border-white/5 bg-surface-container-low/30">
           <span className="text-[14px] font-bold text-primary tracking-widest uppercase">
             Reviewed
@@ -169,8 +169,8 @@ export default function ProfileView({
         
         {/* Left Column: Your Submitted Reviews Feed */}
         <div className="lg:col-span-8 space-y-6">
-          <div className="glass-panel p-6 rounded-2xl space-y-5">
-            <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <div className="glass-panel p-6 rounded-2xl space-y-5 max-md:!bg-transparent max-md:!border-none max-md:!p-0 max-md:!shadow-none max-md:!backdrop-blur-none">
+            <div className="flex items-center justify-between border-b border-white/5 pb-3 max-md:px-margin-mobile">
               <h3 className="font-display text-xl font-bold text-white tracking-tight flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary text-[22px]">rate_review</span>
                 Your Submitted Reviews
@@ -181,7 +181,7 @@ export default function ProfileView({
             </div>
 
             {reviewsCount === 0 ? (
-              <div className="py-12 px-4 text-center space-y-3.5 bg-surface-container-low/20 border border-dashed border-white/5 rounded-xl">
+              <div className="py-12 px-4 text-center space-y-3.5 bg-surface-container-low/20 border border-dashed border-white/5 rounded-xl max-md:mx-margin-mobile">
                 <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-white/5 text-on-surface-variant">
                   <span className="material-symbols-outlined text-[26px]">chat_bubble_outline</span>
                 </div>
@@ -193,7 +193,7 @@ export default function ProfileView({
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
+              <div className="space-y-4 max-md:space-y-0">
                 {paginatedReviews.map((review) => {
                   const reviewDate = new Date(review.createdAt).toLocaleDateString(undefined, {
                     year: 'numeric',
@@ -212,7 +212,8 @@ export default function ProfileView({
                   return (
                     <div 
                       key={review.id} 
-                      className="bg-surface-container-low/40 border border-white/5 p-4 rounded-xl space-y-3 hover:border-white/10 transition-colors"
+                      className="bg-surface-container-low/40 border border-white/5 p-4 rounded-xl space-y-3 hover:border-white/10 transition-colors
+                        max-md:!bg-transparent max-md:!border-x-0 max-md:!border-t-0 max-md:!border-b max-md:!border-b-white/5 max-md:!rounded-none max-md:!px-margin-mobile max-md:!py-4 max-md:!space-y-2.5"
                     >
                       {/* Review Card Header */}
                       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -292,10 +293,10 @@ export default function ProfileView({
                       </div>
 
                       {/* Action buttons (Go to bar, Edit, Delete) */}
-                      <div className="flex items-center gap-2 pt-2 border-t border-white/5">
+                      <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/5">
                         <button
                           onClick={() => onBarSelect && onBarSelect(review.barId)}
-                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-white rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-white rounded-lg transition-all flex items-center gap-1.5 cursor-pointer max-md:flex-1 max-md:justify-center"
                         >
                           <span className="material-symbols-outlined text-[16px]">map</span>
                           Go to Bar
@@ -303,7 +304,7 @@ export default function ProfileView({
                         
                         <button
                           onClick={() => router.push(`/bar/${review.barId}/review/${review.id}`)}
-                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-primary rounded-lg transition-all flex items-center gap-1.5 cursor-pointer"
+                          className="px-3 py-1.5 bg-surface-container-low border border-white/5 hover:border-white/20 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-primary rounded-lg transition-all flex items-center gap-1.5 cursor-pointer max-md:flex-1 max-md:justify-center"
                         >
                           <span className="material-symbols-outlined text-[16px]">edit</span>
                           Edit
@@ -312,7 +313,7 @@ export default function ProfileView({
                         <button
                           onClick={() => handleDeleteReview(review.id)}
                           disabled={deletingId === review.id}
-                          className="px-3 py-1.5 bg-red-955/20 border border-red-900/30 hover:bg-red-950/40 hover:border-red-900/50 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-red-400 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer ml-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-1.5 bg-red-955/20 border border-red-900/30 hover:bg-red-950/40 hover:border-red-900/50 active:scale-95 text-[13px] font-bold tracking-wider uppercase text-red-400 rounded-lg transition-all flex items-center gap-1.5 cursor-pointer md:ml-auto disabled:opacity-50 disabled:cursor-not-allowed max-md:w-full max-md:justify-center"
                         >
                           <span className="material-symbols-outlined text-[16px]">
                             {deletingId === review.id ? "hourglass_empty" : "delete"}
@@ -328,7 +329,7 @@ export default function ProfileView({
 
             {/* Pagination Controls */}
             {totalPages > 1 && (
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-white/5">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pt-4 border-t border-white/5 max-md:px-margin-mobile">
                 <span className="text-[14px] text-on-surface-variant font-light">
                   Showing {Math.min((activePage - 1) * itemsPerPage + 1, reviewsCount)}–
                   {Math.min(activePage * itemsPerPage, reviewsCount)} of {reviewsCount} reviews
@@ -375,7 +376,7 @@ export default function ProfileView({
         </div>
 
         {/* Right Column: Token Credentials Card */}
-        <div className="lg:col-span-4 space-y-6">
+        <div className="lg:col-span-4 space-y-6 max-md:px-margin-mobile">
           <div className="glass-panel p-6 rounded-2xl space-y-4">
             <div>
               <h3 className="font-display text-xl font-bold text-white tracking-tight">

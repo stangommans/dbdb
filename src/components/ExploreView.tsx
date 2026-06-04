@@ -61,7 +61,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
   return (
     <div className="w-full max-w-container-max mx-auto px-margin-mobile md:px-margin-desktop pt-8 pb-36 md:pb-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
       {/* Intro section */}
-      <div className="mb-8">
+      <div className="mb-8 max-md:mb-5">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
           Discover the Underground
         </h2>
@@ -71,7 +71,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
       </div>
 
       {bars.length === 0 ? (
-        <div className="flex flex-col items-center justify-center text-center p-12 border border-white/5 bg-surface-container-low rounded-2xl space-y-4">
+        <div className="flex flex-col items-center justify-center text-center p-12 border border-white/5 bg-surface-container-low rounded-2xl space-y-4 mx-4">
           <span className="material-symbols-outlined text-[48px] text-on-surface-variant/40 animate-pulse">
             explore_off
           </span>
@@ -84,7 +84,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
         </div>
       ) : (
         /* Bento Responsive Grid */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-md:gap-4">
           {bars.map((bar, barIdx) => {
             // Check if any review has an uploaded photo
             const uploadedPhoto = bar.reviews.find((r) => r.photoUrl)?.photoUrl;
@@ -134,7 +134,7 @@ export default function ExploreView({ bars, onBarSelect, selectedBarId, activeCu
                 </div>
 
                 {/* Details Body */}
-                <div className="p-5 space-y-3.5">
+                <div className="p-5 max-md:px-5 max-md:py-4 space-y-3.5 max-md:space-y-2.5">
                   <div>
                     <h3 className="font-display text-2xl font-bold text-white group-hover:text-primary transition-colors line-clamp-1 leading-snug">
                       {bar.name}

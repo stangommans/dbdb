@@ -2,6 +2,13 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.4.0] - 2026-06-04
+
+### Changed
+- **Fullscreen Mobile Overlays**: Configured all overlays, sliding sheets, drawers, and modal views to render as true borderless fullscreen panels (`h-dvh`) on mobile screens to eliminate dead space and virtual keyboard occlusion. This includes the Add Bar sheet, Filter overlay, Discover Dives list drawer, Bar Details drawer, Review Form sheet, and Review Detail modal.
+- **Profile Feed Alignment**: Refactored the ProfileView page layout to remove external borders and background frames, while keeping internal texts and controls beautifully aligned via proper mobile horizontal padding.
+- **Explore Card Spacing**: Restored the bento grid margins and glass card boundaries in ExploreView on mobile to give cards adequate air on the left and right sides.
+
 ## [1.3.0] - 2026-06-04
 
 ### Added

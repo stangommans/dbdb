@@ -56,20 +56,21 @@ export default function FilterOverlay({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[1000] bg-black/70 backdrop-blur-md flex items-center justify-center p-4 max-md:p-0">
       {/* Sliding Sheet */}
       <div 
-        className="w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-white/10 flex flex-col max-h-[calc(100dvh-32px)]"
+        className="w-full max-w-lg glass-panel rounded-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 border border-white/10 flex flex-col max-h-[calc(100dvh-32px)]
+          max-md:fixed max-md:inset-0 max-md:w-full max-md:max-w-none max-md:h-dvh max-md:max-h-dvh max-md:rounded-none max-md:border-none"
         role="dialog"
         aria-modal="true"
       >
         {/* Header */}
-        <div className="px-8 py-6 border-b border-white/10 flex items-center justify-between">
+        <div className="px-8 py-6 max-md:px-5 max-md:py-4 border-b border-white/10 flex items-center justify-between">
           <div>
-            <h3 className="font-display text-[24px] font-bold text-white tracking-tight">
+            <h3 className="font-display text-[24px] max-md:text-[20px] font-bold text-white tracking-tight">
               Filter discovery
             </h3>
-            <p className="text-[18px] font-bold text-primary tracking-widest uppercase mt-1">
+            <p className="text-[18px] max-md:text-[15px] font-bold text-primary tracking-widest uppercase mt-1">
               Refining {barCount} hidden gems
             </p>
           </div>
@@ -77,35 +78,35 @@ export default function FilterOverlay({
             onClick={onClose}
             className="text-on-surface-variant hover:text-white p-2 hover:bg-white/5 rounded-full transition-colors active:scale-90 cursor-pointer"
           >
-            <span className="material-symbols-outlined text-[28px]">close</span>
+            <span className="material-symbols-outlined text-[28px] max-md:text-[24px]">close</span>
           </button>
         </div>
 
         {/* Filters Scrollable Content */}
-        <div className="p-6 space-y-6 md:p-8 md:space-y-8 flex-1 overflow-y-auto custom-scrollbar">
+        <div className="p-6 max-md:p-5 space-y-6 max-md:space-y-5 md:p-8 md:space-y-8 flex-1 overflow-y-auto custom-scrollbar">
           {/* Search bar segment */}
           <div className="space-y-2">
-            <label className="block font-display text-[18px] font-bold text-primary tracking-widest uppercase mb-1">
+            <label className="block font-display text-[18px] max-md:text-[15px] font-bold text-primary tracking-widest uppercase mb-1">
               Keywords
             </label>
-            <div className="flex items-center gap-3 bg-surface-container-lowest border border-white/10 px-5 py-3 rounded-xl min-h-[52px]">
-              <span className="material-symbols-outlined text-on-surface-variant text-[24px]">search</span>
+            <div className="flex items-center gap-3 bg-surface-container-lowest border border-white/10 px-5 max-md:px-4 py-3 max-md:py-2.5 rounded-xl min-h-[52px] max-md:min-h-[46px]">
+              <span className="material-symbols-outlined text-on-surface-variant text-[24px] max-md:text-[20px]">search</span>
               <input
                 type="text"
                 placeholder="Search by name, address..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="bg-transparent border-none outline-none text-[18px] text-white w-full focus:ring-0 focus:outline-none placeholder-on-surface-variant/30 py-1"
+                className="bg-transparent border-none outline-none text-[18px] max-md:text-[15px] text-white w-full focus:ring-0 focus:outline-none placeholder-on-surface-variant/30 py-1"
               />
             </div>
           </div>
 
           {/* Currency Preference Selection */}
           <div className="space-y-3">
-            <label className="block font-display text-[18px] font-bold text-primary tracking-widest uppercase mb-1">
+            <label className="block font-display text-[18px] max-md:text-[15px] font-bold text-primary tracking-widest uppercase mb-1">
               Display Currency
             </label>
-            <div className="grid grid-cols-3 gap-2.5">
+            <div className="grid grid-cols-3 gap-2.5 max-md:gap-2">
               {CURRENCIES.map((c) => {
                 const active = activeCurrency === c.code;
                 return (
@@ -117,7 +118,7 @@ export default function FilterOverlay({
                         localStorage.setItem("dbdb_currency", c.code);
                       }
                     }}
-                    className={`px-3 py-3 rounded-xl border text-[18px] font-bold font-display transition-all cursor-pointer select-none active:scale-95 min-h-[48px] flex items-center justify-center gap-1.5
+                    className={`px-3 py-3 max-md:py-2 rounded-xl border text-[18px] max-md:text-[15px] font-bold font-display transition-all cursor-pointer select-none active:scale-95 min-h-[48px] max-md:min-h-[42px] flex items-center justify-center gap-1.5
                       ${
                         active
                           ? "bg-primary-container text-on-primary-container border-primary-container shadow-md shadow-primary-container/10"
@@ -135,14 +136,14 @@ export default function FilterOverlay({
           {/* Rating filter slider */}
           <div className="space-y-3">
             <div className="flex justify-between items-center">
-              <label className="font-display text-[18px] font-bold text-primary tracking-widest uppercase">
+              <label className="font-display text-[18px] max-md:text-[15px] font-bold text-primary tracking-widest uppercase">
                 Minimum Dive Score
               </label>
-              <span className="font-display text-[20px] font-bold text-white flex items-center gap-1.5">
+              <span className="font-display text-[20px] max-md:text-[18px] font-bold text-white flex items-center gap-1.5">
                 <span className="text-primary">★</span> {minRating.toFixed(1)}
               </span>
             </div>
-            <div className="py-2">
+            <div className="py-2 max-md:py-1">
               <input
                 type="range"
                 min="0"
@@ -153,7 +154,7 @@ export default function FilterOverlay({
                 className="w-full accent-primary-container bg-surface-container-high h-2 rounded-lg appearance-none cursor-pointer"
               />
             </div>
-            <div className="flex justify-between text-[18px] text-on-surface-variant font-bold tracking-tight uppercase px-1">
+            <div className="flex justify-between text-[18px] max-md:text-[14px] text-on-surface-variant font-bold tracking-tight uppercase px-1">
               <span>Any Score</span>
               <span>Legendary (5.0)</span>
             </div>
@@ -161,17 +162,17 @@ export default function FilterOverlay({
 
           {/* Tag multi-filters */}
           <div className="space-y-3">
-            <label className="block font-display text-[18px] font-bold text-primary tracking-widest uppercase mb-1">
+            <label className="block font-display text-[18px] max-md:text-[15px] font-bold text-primary tracking-widest uppercase mb-1">
               Vibes & Amenities
             </label>
-            <div className="flex flex-wrap gap-2.5">
+            <div className="flex flex-wrap gap-2.5 max-md:gap-2">
               {AMENITIES_OPTIONS.map((option) => {
                 const active = selectedAmenities.includes(option.key);
                 return (
                   <button
                     key={option.key}
                     onClick={() => toggleAmenity(option.key)}
-                    className={`px-5 py-3 rounded-xl border text-[18px] font-bold font-display transition-all cursor-pointer select-none active:scale-95 min-h-[48px] flex items-center justify-center
+                    className={`px-5 max-md:px-4 py-3 max-md:py-2.5 rounded-xl border text-[18px] max-md:text-[15px] font-bold font-display transition-all cursor-pointer select-none active:scale-95 min-h-[48px] max-md:min-h-[40px] flex items-center justify-center
                       ${
                         active
                           ? "bg-primary-container text-on-primary-container border-primary-container shadow-md shadow-primary-container/10"
@@ -187,16 +188,16 @@ export default function FilterOverlay({
         </div>
 
         {/* Footer controls */}
-        <div className="px-8 py-6 border-t border-white/10 bg-surface-container-lowest flex items-center justify-between gap-6">
+        <div className="px-8 max-md:px-5 py-6 max-md:py-4 border-t border-white/10 bg-surface-container-lowest flex items-center justify-between gap-6">
           <button
             onClick={clearFilters}
-            className="text-on-surface-variant hover:text-white font-display text-[18px] font-bold tracking-widest uppercase hover:underline cursor-pointer min-h-[48px] px-3 flex items-center justify-center"
+            className="text-on-surface-variant hover:text-white font-display text-[18px] max-md:text-[15px] font-bold tracking-widest uppercase hover:underline cursor-pointer min-h-[48px] max-md:min-h-[40px] px-3 flex items-center justify-center"
           >
             Clear All
           </button>
           <button
             onClick={onClose}
-            className="px-8 py-3.5 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 font-display text-[18px] font-bold tracking-widest uppercase rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer min-h-[52px] flex items-center justify-center"
+            className="px-8 py-3.5 bg-primary-container text-on-primary-container hover:brightness-110 active:scale-95 font-display text-[18px] max-md:text-[15px] font-bold tracking-widest uppercase rounded-xl transition-all shadow-lg shadow-amber-500/10 cursor-pointer min-h-[52px] max-md:min-h-[44px] flex items-center justify-center"
           >
             Apply filters
           </button>

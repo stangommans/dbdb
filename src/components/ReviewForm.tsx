@@ -75,7 +75,8 @@ export default function ReviewForm({
   // Form states
   const [diveScore, setDiveScore] = useState<number>(existingReview?.diveScore || 0);
   const [hoverScore, setHoverScore] = useState<number>(0);
-  const [showDetailed, setShowDetailed] = useState<boolean>(true);
+  const showDetailed = true; // Always show detailed options
+  const [showCancelConfirm, setShowCancelConfirm] = useState<boolean>(false);
 
   // Optional states
   const [vessel, setVessel] = useState<string>(existingReview?.vessel || 'Glass');
@@ -105,6 +106,36 @@ export default function ReviewForm({
   };
   const numMl = vesselSize === 'other' ? (parseFloat(vesselSizeMl) || 0) : getMlFromSize(vesselSize);
   const calculatedPricePerMl = numMl > 0 ? numPrice / numMl : 0;
+
+  const hasChanges = () => {
+    if (isEditMode && existingReview) {
+      return (
+        diveScore !== existingReview.diveScore ||
+        comment !== (existingReview.comment || '') ||
+        photoUrl !== (existingReview.photoUrl || '') ||
+        selectedAmenities.join(',') !== (existingReview.amenities || '') ||
+        vessel !== (existingReview.vessel || 'Glass') ||
+        vesselSize !== (existingReview.vesselSize || '330ml') ||
+        purchasePrice !== (existingReview.purchasePrice?.toString() || '') ||
+        purchaseCurrency !== (existingReview.purchaseCurrency || 'EUR')
+      );
+    }
+    return (
+      diveScore > 0 ||
+      comment !== '' ||
+      photoUrl !== '' ||
+      selectedAmenities.length > 0 ||
+      purchasePrice !== ''
+    );
+  };
+
+  const handleCancelClick = () => {
+    if (hasChanges()) {
+      setShowCancelConfirm(true);
+    } else {
+      onClose();
+    }
+  };
 
   // Photo upload handler
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -221,9 +252,35 @@ export default function ReviewForm({
   };
 
   return (
-    <div className="flex flex-col h-full bg-neutral-950/80 backdrop-blur-xl border border-neutral-800/80 rounded-2xl text-white overflow-hidden shadow-2xl">
+    <div className="flex flex-col h-full bg-neutral-950/80 backdrop-blur-xl border border-neutral-800/80 rounded-2xl text-white overflow-hidden shadow-2xl max-md:rounded-none max-md:border-0 relative">
+      {/* Cancel Confirmation Modal */}
+      {showCancelConfirm && (
+        <div className="absolute inset-0 z-[1100] flex items-center justify-center bg-black/80 backdrop-blur-md p-6">
+          <div className="bg-neutral-900 border border-neutral-800 p-6 rounded-2xl max-w-sm w-full text-center space-y-5 animate-in fade-in zoom-in-95 duration-150 shadow-2xl">
+            <h4 className="text-xl font-bold text-white">Discard changes?</h4>
+            <p className="text-neutral-400 text-[16px]">You have unsaved changes in your review. Are you sure you want to discard them?</p>
+            <div className="flex gap-3">
+              <button
+                type="button"
+                onClick={() => setShowCancelConfirm(false)}
+                className="flex-1 bg-neutral-800 hover:bg-neutral-700 text-white font-bold py-3 px-4 rounded-xl text-[16px] transition-colors"
+              >
+                Keep Editing
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold py-3 px-4 rounded-xl text-[16px] transition-colors"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
-      <div className="flex items-center justify-between border-b border-neutral-800/60 p-6 sm:px-8 sm:py-5">
+      <div className="flex items-center justify-between border-b border-neutral-800/60 p-6 max-md:p-5 sm:px-8 sm:py-5">
         <div>
           <span className="text-[18px] font-bold uppercase tracking-wider text-amber-500 block mb-1">
             {isEditMode ? 'Edit Existing Review' : 'Anonymous Rating'}
@@ -233,7 +290,8 @@ export default function ReviewForm({
           </h3>
         </div>
         <button
-          onClick={onClose}
+          type="button"
+          onClick={handleCancelClick}
           className="text-neutral-400 hover:text-white px-3 py-2 hover:bg-neutral-800 rounded-xl transition-colors text-[18px] font-medium"
         >
           Cancel
@@ -284,21 +342,8 @@ export default function ReviewForm({
             </span>
           </div>
 
-          {/* Accordion Toggle for optional specs */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowDetailed(!showDetailed)}
-              className="w-full flex items-center justify-between p-4 bg-neutral-900/60 hover:bg-neutral-900 border border-neutral-800 rounded-xl transition-all text-[18px] font-bold uppercase tracking-widest text-neutral-300"
-            >
-              <span>Optional Details (Amenities, Pricing & Photos)</span>
-              <span className="text-[20px]">{showDetailed ? '▼' : '▶'}</span>
-            </button>
-          </div>
-
           {/* OPTIONAL: Detailed ratings drawer */}
-          {showDetailed && (
-            <div className="space-y-6 sm:space-y-8 animate-fadeIn">
+          <div className="space-y-6 sm:space-y-8 animate-fadeIn">
               {/* Amenities & Vibes toggle chips */}
               <div className="space-y-2">
                 <label className="block text-[18px] font-bold uppercase tracking-widest text-neutral-400 mb-1">
@@ -500,7 +545,6 @@ export default function ReviewForm({
                 )}
               </div>
             </div>
-          )}
         </div>
 
         {/* Sticky Footer */}
@@ -514,7 +558,7 @@ export default function ReviewForm({
           <button
             type="submit"
             disabled={submitting}
-            className="w-full bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black py-4 px-6 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center text-[18px] min-h-[56px]"
+            className="w-full bg-amber-500 hover:bg-amber-400 text-neutral-950 font-black py-4 px-6 max-md:py-3 rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-amber-500/10 disabled:opacity-50 disabled:active:scale-100 flex items-center justify-center text-[18px] min-h-[56px] max-md:min-h-[48px]"
           >
             {submitting ? (
               <span className="flex h-5 w-5 animate-spin rounded-full border-2 border-neutral-950 border-t-transparent" />
