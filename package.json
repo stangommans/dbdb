@@ -2,6 +2,13 @@
   "name": "temp-next-app",
   "version": "1.3.0",
   "private": true,
+  "allowScripts": {
+    "@prisma/client": true,
+    "@prisma/engines": true,
+    "prisma": true,
+    "sharp": true,
+    "unrs-resolver": true
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
