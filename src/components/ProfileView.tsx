@@ -118,10 +118,10 @@ export default function ProfileView({
       {/* Intro section */}
       <div className="mb-8 max-md:px-margin-mobile">
         <h2 className="font-display text-2xl md:text-3xl font-bold text-white tracking-tight">
-          Anonymous Profile
+          My Profile
         </h2>
         <p className="text-on-surface-variant text-[18px] mt-1.5 max-w-2xl font-light">
-          Your dashboard is backed by a secure, cryptographic anonymous token. No emails, no passwords, no tracker scripts. Pure privacy.
+          Your dashboard is backed by a secure, cryptographic token. No emails, no passwords, no tracker scripts. Pure privacy.
         </p>
       </div>
 
@@ -383,7 +383,7 @@ export default function ProfileView({
                 Cryptographic Key
               </h3>
               <p className="text-[18px] font-bold text-primary tracking-widest uppercase mt-1">
-                Your Unique Anonymous Signature
+                Your Unique Signature
               </p>
             </div>
 
@@ -409,7 +409,7 @@ export default function ProfileView({
                 Privacy Guard Guarantee
               </h4>
               <p className="text-[18px] text-on-surface-variant font-light leading-relaxed">
-                This token is stored as a secure HTTP-Only cookie. It binds your local reviews and uploads to your browser anonymously, enabling you to add and edit them freely without exposing your identity.
+                This token is stored as a secure HTTP-Only cookie. It binds your local reviews and uploads to your browser, enabling you to add and edit them freely without exposing your identity.
               </p>
             </div>
           </div>

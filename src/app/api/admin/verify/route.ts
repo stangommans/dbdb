@@ -8,7 +8,7 @@ export async function POST(request: Request) {
     const configuredPasscode = process.env.ADMIN_PASSCODE || 'dbdb-admin';
     
     if (passcode === configuredPasscode) {
-      return NextResponse.json({ success: true, message: 'Admin passcode successfully authenticated.' });
+      return NextResponse.json({ success: true, valid: true, message: 'Admin passcode successfully authenticated.' });
     }
     
     return NextResponse.json({ error: 'Invalid administrative passcode.' }, { status: 401 });

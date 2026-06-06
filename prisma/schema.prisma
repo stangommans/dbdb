@@ -45,3 +45,14 @@ model Review {
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
 }
+
+model Feedback {
+  id            String   @id @default(uuid())
+  content       String
+  status        String   @default("Pending") // e.g. "Pending", "Under Review", "Planned", "Completed"
+  adminComment  String?  // Custom administrative response/comment
+  reviewerToken String   
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+

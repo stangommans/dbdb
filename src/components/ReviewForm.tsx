@@ -283,7 +283,7 @@ export default function ReviewForm({
       <div className="flex items-center justify-between border-b border-neutral-800/60 p-6 max-md:p-5 sm:px-8 sm:py-5">
         <div>
           <span className="text-[18px] font-bold uppercase tracking-wider text-amber-500 block mb-1">
-            {isEditMode ? 'Edit Existing Review' : 'Anonymous Rating'}
+            {isEditMode ? 'Edit Existing Review' : 'Rate & Review'}
           </span>
           <h3 className="text-[24px] font-bold tracking-tight text-white font-sans truncate max-w-[280px]">
             {barName}
@@ -565,7 +565,7 @@ export default function ReviewForm({
             ) : isEditMode ? (
               'Update Review'
             ) : (
-              'Publish Anonymous Review'
+              'Publish Review'
             )}
           </button>
         </div>

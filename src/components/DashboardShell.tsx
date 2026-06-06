@@ -102,7 +102,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
   // Initial resource load
   const fetchData = useCallback(async () => {
     try {
-      // 1. Fetch secure user anonymous UUID token
+      // 1. Fetch secure user UUID token
       const meRes = await fetch('/api/me');
       if (meRes.ok) {
         const meData = await meRes.json();

@@ -47,7 +47,7 @@ export async function getOrCreateReviewerToken(): Promise<SessionPayload> {
     console.error('Error parsing session cookie:', err);
   }
 
-  // Create a brand-new secure anonymous identity
+  // Create a brand-new secure identity
   const newUuid = crypto.randomUUID();
   const newSignature = crypto
     .createHmac('sha256', SECRET)

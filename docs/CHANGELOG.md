@@ -2,6 +2,19 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.5.0] - 2026-06-06
+
+### Added
+- **Global Branding Purge**: Removed all occurrences of "anonymous" and "anonymously" across user-facing layouts, document metadata, rating/review submission forms, profile pages, and codebase comments.
+- **About Page Redesign**:
+  - Restructured the page with a full-width header block containing two columns: `"Why DBDB?"` (left) and `"What is a Dive Bar?"` (right).
+  - Wrote a new origin narrative featuring Barcelona travel stories, digital agency interns, Reddit research references, and customized vocabulary for "neighborhood watering holes" and "cozy brown cafés".
+  - Embedded developer, version, and source code metadata directly into a 3-column row inside the right section, removing the standalone `"About DBDB"` sidebar card.
+  - Aligned all subheadings under the About section (Why DBDB?, What is a Dive Bar?, About DBDB) with uniform typography and amber-accented material icons.
+  - Promoted the `"Global Platform Metrics"` section to a full-width block below the top panel to balance the layout.
+- **Admin Verification Fix**: Aligned the `/api/admin/verify` endpoint payload with the admin verification middleware to fix passcode login failures on direct navigations to `/admin`.
+- **UI Cleanups**: Removed the redundant system passcode gate and administrative text mentions from the public `/about` page.
+
 ## [1.4.0] - 2026-06-04
 
 ### Changed

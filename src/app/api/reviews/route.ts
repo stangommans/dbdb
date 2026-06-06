@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     // Get or create secure reviewer token
     const { uuid: reviewerUuid, rawToken, isNew } = await getOrCreateReviewerToken();
 
-    // Check if review already exists for this bar by this anonymous user
+    // Check if review already exists for this bar by this user
     const existingReview = await db.review.findFirst({
       where: {
         barId,
