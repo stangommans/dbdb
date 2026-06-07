@@ -2,6 +2,27 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.6.0] - 2026-06-07
+
+### Added
+- **Interactive Feedback Kanban**:
+  - Implemented a 4-column (Pending, Under Review, Planned, Completed) Kanban board for managing user feedback and feature requests.
+  - Added native Drag-and-Drop column transitions with animated drop zone borders.
+  - Created a responsive `viewMode` toggle defaulting to Kanban on desktop ($\ge$ 1024px) and List on mobile.
+  - Designed interactive cards with inline editing textareas, touch-friendly fallback status dropdowns, and confirmable deletion triggers.
+  - Ported the Kanban dashboard to the public `/about` page, dynamically unlocking full administrative features upon entering a valid passcode.
+- **Dynamic SEO Sitemap (`sitemap.ts`)**:
+  - Generates an automated dynamic XML sitemap mapping static indices (`/`, `/explore`, `/about`) alongside all dynamic `/bar/[id]` details populated directly from database records.
+- **Crawler Access Control (`robots.ts`)**:
+  - Implemented crawler policies explicitly blocking crawl budgets on `/admin`, user `/profile`, `/stash`, and backend `/api/*` endpoints while permitting exploration paths.
+- **JSON-LD Schema Rich Snippets**:
+  - Automatically embeds Schema.org `Bar` and `AggregateRating` JSON-LD scripts server-side on `/bar/[id]` endpoints.
+- **Canonical Alternate Tags**:
+  - Configured project-wide canonical URLs and `metadataBase` on dynamic and static paths.
+
+### Fixed
+- **Runtime TypeError**: Added optional typing and fallback render checks to prevent client-side crashes on community feedback entries lacking a `reviewerToken`.
+
 ## [1.5.0] - 2026-06-06
 
 ### Added

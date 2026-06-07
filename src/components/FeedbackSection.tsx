@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 
 interface FeedbackItem {
   id: string;
@@ -29,6 +29,42 @@ export default function FeedbackSection({ adminPasscode }: FeedbackSectionProps)
   const [editingContent, setEditingContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("list");
+  const [activeDragOverColumn, setActiveDragOverColumn] = useState<string | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      const timer = setTimeout(() => {
+        if (active) {
+          setViewMode("kanban");
+        }
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
+    }
+  }, []);
+
+  const feedbackByStatus = useMemo(() => {
+    const groups: Record<string, FeedbackItem[]> = {
+      "Pending": [],
+      "Under Review": [],
+      "Planned": [],
+      "Completed": [],
+    };
+    feedbackList.forEach((item) => {
+      const status = item.status || "Pending";
+      if (groups[status]) {
+        groups[status].push(item);
+      } else {
+        groups["Pending"].push(item);
+      }
+    });
+    return groups;
+  }, [feedbackList]);
 
   // Load feedback on mount
   useEffect(() => {
@@ -267,9 +303,37 @@ export default function FeedbackSection({ adminPasscode }: FeedbackSectionProps)
 
       {/* Feedback List */}
       <div className="space-y-4 pt-4 border-t border-white/5">
-        <h4 className="font-display text-[16px] font-bold text-white uppercase tracking-wider">
-          Community Suggestions ({feedbackList.length})
-        </h4>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+          <h4 className="font-display text-[16px] font-bold text-white uppercase tracking-wider">
+            Community Suggestions ({feedbackList.length})
+          </h4>
+          
+          {/* View Switcher Toggle */}
+          <div className="flex items-center gap-1 bg-surface-container-lowest border border-white/5 rounded-xl p-1 self-start sm:self-auto">
+            <button
+              onClick={() => setViewMode("list")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${viewMode === "list"
+                  ? "bg-primary text-black"
+                  : "text-neutral-400 hover:text-white"
+                }`}
+              title="Switch to List View"
+            >
+              <span className="material-symbols-outlined text-[14px]">format_list_bulleted</span>
+              List
+            </button>
+            <button
+              onClick={() => setViewMode("kanban")}
+              className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${viewMode === "kanban"
+                  ? "bg-primary text-black"
+                  : "text-neutral-400 hover:text-white"
+                }`}
+              title="Switch to Kanban View"
+            >
+              <span className="material-symbols-outlined text-[14px]">view_week</span>
+              Kanban
+            </button>
+          </div>
+        </div>
 
         {isLoading ? (
           <div className="flex items-center justify-center py-8 text-on-surface-variant font-light text-[15px] gap-2 animate-pulse">
@@ -280,7 +344,7 @@ export default function FeedbackSection({ adminPasscode }: FeedbackSectionProps)
           <p className="text-center py-8 text-neutral-500 font-light text-[15px]">
             No feedback submitted yet. Be the first to suggest a feature!
           </p>
-        ) : (
+        ) : viewMode === "list" ? (
           <div className="space-y-4">
             {feedbackList.map((item) => (
               <div
@@ -402,6 +466,215 @@ export default function FeedbackSection({ adminPasscode }: FeedbackSectionProps)
                 )}
               </div>
             ))}
+          </div>
+        ) : (
+          /* Kanban View */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full align-top animate-in fade-in duration-200">
+            {["Pending", "Under Review", "Planned", "Completed"].map((colName) => {
+              const items = feedbackByStatus[colName] || [];
+              const isDragOver = activeDragOverColumn === colName && !!adminPasscode;
+
+              // Status specific styling
+              const borderColors: Record<string, string> = {
+                "Pending": "border-neutral-500/20",
+                "Under Review": "border-blue-500/20",
+                "Planned": "border-amber-500/20",
+                "Completed": "border-emerald-500/20",
+              };
+
+              const dotColors: Record<string, string> = {
+                "Pending": "bg-neutral-500",
+                "Under Review": "bg-blue-500",
+                "Planned": "bg-amber-500",
+                "Completed": "bg-emerald-500",
+              };
+
+              const bgColors: Record<string, string> = {
+                "Pending": "bg-neutral-500/5",
+                "Under Review": "bg-blue-500/5",
+                "Planned": "bg-amber-500/5",
+                "Completed": "bg-emerald-500/5",
+              };
+
+              return (
+                <div
+                  key={colName}
+                  onDragOver={(e) => {
+                    if (!adminPasscode) return;
+                    e.preventDefault();
+                    if (activeDragOverColumn !== colName) {
+                      setActiveDragOverColumn(colName);
+                    }
+                  }}
+                  onDragLeave={() => {
+                    if (!adminPasscode) return;
+                    setActiveDragOverColumn(null);
+                  }}
+                  onDrop={(e) => {
+                    if (!adminPasscode) return;
+                    e.preventDefault();
+                    setActiveDragOverColumn(null);
+                    const feedbackId = e.dataTransfer.getData("text/plain");
+                    if (feedbackId) {
+                      handleAdminStatusChange(feedbackId, colName);
+                    }
+                  }}
+                  className={`flex flex-col rounded-2xl border bg-black/20 p-4 min-h-[400px] transition-all duration-200 ${isDragOver
+                      ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_rgba(245,197,24,0.1)]"
+                      : `${borderColors[colName]} ${bgColors[colName]}`
+                    }`}
+                >
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
+                    <div className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full ${dotColors[colName]}`} />
+                      <h4 className="font-display font-bold text-white text-[14px] uppercase tracking-wider">{colName}</h4>
+                    </div>
+                    <span className="px-2 py-0.5 rounded bg-white/5 text-[11px] text-neutral-400 font-mono">
+                      {items.length}
+                    </span>
+                  </div>
+
+                  {/* Column Content */}
+                  <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[500px] pr-1 custom-scrollbar">
+                    {items.length === 0 ? (
+                      <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-xl p-6 text-center text-[12px] text-neutral-600 italic">
+                        No items
+                      </div>
+                    ) : (
+                      items.map((item) => {
+                        const isEditing = editingId === item.id;
+                        return (
+                          <div
+                            key={item.id}
+                            draggable={!!adminPasscode && !isEditing}
+                            onDragStart={(e) => {
+                              if (!adminPasscode) return;
+                              e.dataTransfer.setData("text/plain", item.id);
+                            }}
+                            className={`bg-surface-container-low border border-white/5 p-4 rounded-xl space-y-3 transition-all ${
+                              isEditing
+                                ? "ring-1 ring-primary/40 border-primary/20"
+                                : adminPasscode
+                                  ? "cursor-grab active:cursor-grabbing hover:border-white/10"
+                                  : ""
+                            }`}
+                          >
+                            {/* Header info */}
+                            <div className="flex items-start justify-between gap-2">
+                              <span className="text-neutral-500 text-[11px] font-light font-mono block">
+                                {formatDate(item.createdAt)}
+                              </span>
+
+                              {/* Card Actions */}
+                              {!isEditing ? (
+                                <div className="flex items-center gap-1.5">
+                                  {item.isOwner && (
+                                    <>
+                                      <button
+                                        onClick={() => handleStartEdit(item)}
+                                        title="Edit Suggestion"
+                                        className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-white transition-colors cursor-pointer"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">edit</span>
+                                      </button>
+                                      <button
+                                        onClick={() => handleDelete(item.id)}
+                                        title="Delete Suggestion"
+                                        className="p-1 hover:bg-neutral-800 rounded text-neutral-400 hover:text-red-500 transition-colors cursor-pointer"
+                                      >
+                                        <span className="material-symbols-outlined text-[16px]">delete</span>
+                                      </button>
+                                    </>
+                                  )}
+
+                                  {/* Admin-only options */}
+                                  {adminPasscode && (
+                                    <div className="flex items-center gap-1.5 pl-1.5 border-l border-white/10">
+                                      <select
+                                        value={item.status}
+                                        onChange={(e) => handleAdminStatusChange(item.id, e.target.value)}
+                                        className="bg-surface-container-lowest border border-white/10 px-1 py-0.5 rounded text-[11px] text-white focus:outline-none focus:border-primary/45 cursor-pointer font-sans"
+                                      >
+                                        <option value="Pending">Pending</option>
+                                        <option value="Under Review">Under Review</option>
+                                        <option value="Planned">Planned</option>
+                                        <option value="Completed">Completed</option>
+                                      </select>
+                                      
+                                      {!item.isOwner && (
+                                        <button
+                                          onClick={() => handleDelete(item.id)}
+                                          title="Admin Delete"
+                                          className="p-1 hover:bg-neutral-800 rounded text-red-500/70 hover:text-red-500 transition-colors cursor-pointer"
+                                        >
+                                          <span className="material-symbols-outlined text-[16px]">delete</span>
+                                        </button>
+                                      )}
+                                    </div>
+                                  )}
+                                </div>
+                              ) : null}
+                            </div>
+
+                            {/* Content section */}
+                            {isEditing ? (
+                              <div className="space-y-2 pt-1">
+                                  <textarea
+                                    value={editingContent}
+                                    onChange={(e) => setEditingContent(e.target.value)}
+                                    maxLength={1000}
+                                    disabled={isSaving}
+                                    className="w-full bg-surface-container-lowest border border-white/5 focus:border-primary/45 px-3 py-2 rounded-lg text-[13px] text-white focus:outline-none transition-colors min-h-[70px] resize-none"
+                                  />
+                                  {editError && (
+                                    <p className="text-red-500 text-[11px] font-semibold">
+                                      {editError}
+                                    </p>
+                                  )}
+                                  <div className="flex justify-end gap-1.5">
+                                    <button
+                                      onClick={handleCancelEdit}
+                                      disabled={isSaving}
+                                      className="px-2.5 py-1 bg-neutral-800 hover:bg-neutral-700 text-white font-medium text-[11px] rounded-lg transition-colors cursor-pointer"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      onClick={() => handleSaveEdit(item.id)}
+                                      disabled={isSaving || !editingContent.trim()}
+                                      className="px-2.5 py-1 bg-primary hover:brightness-110 text-on-primary font-bold text-[11px] rounded-lg transition-colors cursor-pointer"
+                                    >
+                                      {isSaving ? "Saving..." : "Save"}
+                                    </button>
+                                  </div>
+                                </div>
+                            ) : (
+                              <div className="space-y-2 pt-1">
+                                <p className="text-white text-[13.5px] font-light leading-relaxed whitespace-pre-wrap font-sans">
+                                  {item.content}
+                                </p>
+                                {item.adminComment && (
+                                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-2.5 mt-2 space-y-0.5 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                                    <div className="flex items-center gap-1 text-primary text-[10px] font-bold uppercase tracking-wider">
+                                      <span className="material-symbols-outlined text-[12px]">admin_panel_settings</span>
+                                      Response
+                                    </div>
+                                    <p className="text-[12px] font-light leading-normal text-neutral-300 whitespace-pre-wrap font-sans">
+                                      {item.adminComment}
+                                    </p>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>

@@ -35,6 +35,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
+    alternates: {
+      canonical: `/bar/${id}`,
+    },
     openGraph: {
       title,
       description,
@@ -48,6 +51,53 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   };
 }
 
-export default function BarPage() {
-  return null;
+export default async function BarPage({ params }: Props) {
+  const { id } = await params;
+  
+  const bar = await db.bar.findUnique({
+    where: { id },
+    include: {
+      reviews: true,
+    },
+  });
+
+  if (!bar) return null;
+
+  const reviewCount = bar.reviews.length;
+  const avgScore = reviewCount > 0
+    ? bar.reviews.reduce((sum, r) => sum + r.diveScore, 0) / reviewCount
+    : 0;
+
+  // Generate dynamic JSON-LD structured schema for search engines
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Bar",
+    "@id": `https://divebardb.com/bar/${bar.id}`,
+    "name": bar.name,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": bar.address,
+    },
+    "geo": {
+      "@type": "GeoCoordinates",
+      "latitude": bar.latitude,
+      "longitude": bar.longitude,
+    },
+    ...(reviewCount > 0 ? {
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": avgScore.toFixed(1),
+        "reviewCount": reviewCount.toString(),
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    } : {}),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+    />
+  );
 }

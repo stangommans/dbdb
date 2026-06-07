@@ -32,6 +32,16 @@ interface Bar {
   averagePricePerMl: number | null;
 }
 
+interface FeedbackItem {
+  id: string;
+  content: string;
+  status: string;
+  createdAt: string;
+  updatedAt: string;
+  reviewerToken: string;
+  adminComment?: string | null;
+}
+
 interface AdminViewProps {
   bars: Bar[];
   adminPasscode: string | null;
@@ -52,7 +62,7 @@ export default function AdminView({
   const [verifying, setVerifying] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedBarId, setSelectedBarId] = useState<string | null>(null);
-  
+
   // Selection state for bulk operations
   const [selectedReviewIds, setSelectedReviewIds] = useState<string[]>([]);
   const [deletingBarId, setDeletingBarId] = useState<string | null>(null);
@@ -61,13 +71,15 @@ export default function AdminView({
 
   // Feedback management states
   const [adminSubTab, setAdminSubTab] = useState<"spots" | "feedback">("spots");
-  const [feedbackList, setFeedbackList] = useState<any[]>([]);
+  const [feedbackList, setFeedbackList] = useState<FeedbackItem[]>([]);
   const [loadingFeedback, setLoadingFeedback] = useState(false);
   const [editingFeedbackId, setEditingFeedbackId] = useState<string | null>(null);
   const [editFeedbackContent, setEditFeedbackContent] = useState("");
   const [editAdminComment, setEditAdminComment] = useState("");
   const [savingFeedbackId, setSavingFeedbackId] = useState<string | null>(null);
   const [deletingFeedbackId, setDeletingFeedbackId] = useState<string | null>(null);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">("list");
+  const [activeDragOverColumn, setActiveDragOverColumn] = useState<string | null>(null);
 
   const fetchFeedback = async () => {
     setLoadingFeedback(true);
@@ -85,12 +97,54 @@ export default function AdminView({
   };
 
   useEffect(() => {
+    let active = true;
     if (adminSubTab === "feedback" && adminPasscode) {
-      fetchFeedback();
+      const timer = setTimeout(() => {
+        if (active) {
+          fetchFeedback();
+        }
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
     }
   }, [adminSubTab, adminPasscode]);
 
-  const startEditingFeedback = (item: any) => {
+  useEffect(() => {
+    let active = true;
+    if (window.matchMedia("(min-width: 1024px)").matches) {
+      const timer = setTimeout(() => {
+        if (active) {
+          setViewMode("kanban");
+        }
+      }, 0);
+      return () => {
+        active = false;
+        clearTimeout(timer);
+      };
+    }
+  }, []);
+
+  const feedbackByStatus = useMemo(() => {
+    const groups: Record<string, FeedbackItem[]> = {
+      "Pending": [],
+      "Under Review": [],
+      "Planned": [],
+      "Completed": [],
+    };
+    feedbackList.forEach((item) => {
+      const status = item.status || "Pending";
+      if (groups[status]) {
+        groups[status].push(item);
+      } else {
+        groups["Pending"].push(item);
+      }
+    });
+    return groups;
+  }, [feedbackList]);
+
+  const startEditingFeedback = (item: FeedbackItem) => {
     setEditingFeedbackId(item.id);
     setEditFeedbackContent(item.content);
     setEditAdminComment(item.adminComment || "");
@@ -281,11 +335,11 @@ export default function AdminView({
         const bCount = b.reviews?.length || 0;
         return sortDirection === "asc" ? aCount - bCount : bCount - aCount;
       }
-      
+
       if (sortKey === "score") {
         const aReviews = a.reviews || [];
         const bReviews = b.reviews || [];
-        const aScore = aReviews.length > 0 
+        const aScore = aReviews.length > 0
           ? aReviews.reduce((acc, r) => acc + r.diveScore, 0) / aReviews.length
           : 0;
         const bScore = bReviews.length > 0
@@ -295,8 +349,8 @@ export default function AdminView({
       }
 
       // Default: sortKey === "name"
-      return sortDirection === "asc" 
-        ? a.name.localeCompare(b.name) 
+      return sortDirection === "asc"
+        ? a.name.localeCompare(b.name)
         : b.name.localeCompare(a.name);
     });
 
@@ -503,7 +557,7 @@ export default function AdminView({
             Authorized session active. Directly delete, inspect, or bulk-purge records.
           </p>
         </div>
-        
+
         <button
           onClick={() => onAdminUnlock(null)}
           className="px-4 py-2 border border-red-900/30 bg-red-950/10 hover:bg-red-950/30 text-red-400 text-[13px] font-bold tracking-wider uppercase rounded-xl transition-all cursor-pointer self-start sm:self-center flex items-center gap-1.5"
@@ -517,9 +571,8 @@ export default function AdminView({
       <div className="flex border-b border-white/5 gap-6">
         <button
           onClick={() => setAdminSubTab("spots")}
-          className={`pb-3 font-display text-[14px] font-bold tracking-wider uppercase transition-all relative cursor-pointer flex items-center gap-1.5 ${
-            adminSubTab === "spots" ? "text-primary font-black" : "text-on-surface-variant hover:text-white"
-          }`}
+          className={`pb-3 font-display text-[14px] font-bold tracking-wider uppercase transition-all relative cursor-pointer flex items-center gap-1.5 ${adminSubTab === "spots" ? "text-primary font-black" : "text-on-surface-variant hover:text-white"
+            }`}
         >
           <span className="material-symbols-outlined text-[18px]">database</span>
           Spots & Reviews
@@ -529,9 +582,8 @@ export default function AdminView({
         </button>
         <button
           onClick={() => setAdminSubTab("feedback")}
-          className={`pb-3 font-display text-[14px] font-bold tracking-wider uppercase transition-all relative cursor-pointer flex items-center gap-1.5 ${
-            adminSubTab === "feedback" ? "text-primary font-black" : "text-on-surface-variant hover:text-white"
-          }`}
+          className={`pb-3 font-display text-[14px] font-bold tracking-wider uppercase transition-all relative cursor-pointer flex items-center gap-1.5 ${adminSubTab === "feedback" ? "text-primary font-black" : "text-on-surface-variant hover:text-white"
+            }`}
         >
           <span className="material-symbols-outlined text-[18px]">rate_review</span>
           Feature Feedback
@@ -551,7 +603,7 @@ export default function AdminView({
                 <h3 className="font-display text-xl font-bold text-white">
                   Spots Database ({bars.length} records)
                 </h3>
-                
+
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
                   {/* Search input */}
                   <div className="relative max-w-xs w-full">
@@ -591,7 +643,7 @@ export default function AdminView({
                 <table className="w-full text-left text-[14px] border-collapse">
                   <thead>
                     <tr className="bg-surface-container-low/50 text-[13px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-white/5">
-                      <th 
+                      <th
                         onClick={() => toggleSort("name")}
                         className="p-3 pl-4 cursor-pointer hover:text-white transition-colors select-none"
                       >
@@ -604,7 +656,7 @@ export default function AdminView({
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         onClick={() => toggleSort("score")}
                         className="p-3 cursor-pointer hover:text-white transition-colors select-none"
                       >
@@ -617,7 +669,7 @@ export default function AdminView({
                           )}
                         </div>
                       </th>
-                      <th 
+                      <th
                         onClick={() => toggleSort("reviews")}
                         className="p-3 cursor-pointer hover:text-white transition-colors select-none"
                       >
@@ -643,7 +695,7 @@ export default function AdminView({
                     ) : (
                       processedBars.map((bar) => {
                         const calculatedReviews = bar.reviews || [];
-                        const calculatedScore = calculatedReviews.length > 0 
+                        const calculatedScore = calculatedReviews.length > 0
                           ? (calculatedReviews.reduce((acc, r) => acc + r.diveScore, 0) / calculatedReviews.length).toFixed(1)
                           : "0.0";
 
@@ -703,7 +755,7 @@ export default function AdminView({
           /* Reviews List for Selected Bar (Full Width) */
           <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
             <div className="glass-panel p-6 rounded-3xl space-y-4">
-              
+
               {/* Reviews Section Header */}
               <div className="flex items-center justify-between border-b border-white/5 pb-3">
                 <div className="flex items-center gap-3">
@@ -832,20 +884,48 @@ export default function AdminView({
         /* Feature Feedback Administration View */
         <div className="space-y-4 animate-in fade-in duration-300">
           <div className="glass-panel p-6 rounded-3xl space-y-6">
-            <div className="flex items-center justify-between border-b border-white/5 pb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-white/5 pb-4">
               <h3 className="font-display text-xl font-bold text-white flex items-center gap-2">
                 <span className="material-symbols-outlined text-primary">forum</span>
                 Feature Requests & Feedback ({feedbackList.length} items)
               </h3>
-              <button
-                onClick={fetchFeedback}
-                disabled={loadingFeedback}
-                className="px-3 py-2 bg-surface-container-low hover:bg-white/10 text-white rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider disabled:opacity-50"
-                title="Refresh Feedback"
-              >
-                <span className="material-symbols-outlined text-[16px]">refresh</span>
-                Refresh
-              </button>
+              <div className="flex items-center gap-3 self-end sm:self-auto">
+                {/* View Switcher Toggle */}
+                <div className="flex items-center gap-1 bg-surface-container-lowest border border-white/5 rounded-xl p-1">
+                  <button
+                    onClick={() => setViewMode("list")}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${viewMode === "list"
+                        ? "bg-primary text-black"
+                        : "text-neutral-400 hover:text-white"
+                      }`}
+                    title="Switch to List View"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">format_list_bulleted</span>
+                    List
+                  </button>
+                  <button
+                    onClick={() => setViewMode("kanban")}
+                    className={`px-3 py-1.5 rounded-lg text-[11px] font-bold uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${viewMode === "kanban"
+                        ? "bg-primary text-black"
+                        : "text-neutral-400 hover:text-white"
+                      }`}
+                    title="Switch to Kanban View"
+                  >
+                    <span className="material-symbols-outlined text-[14px]">view_week</span>
+                    Kanban
+                  </button>
+                </div>
+
+                <button
+                  onClick={fetchFeedback}
+                  disabled={loadingFeedback}
+                  className="px-3 py-2 bg-surface-container-low hover:bg-white/10 text-white rounded-xl transition-all cursor-pointer flex items-center gap-1.5 text-[12px] font-bold uppercase tracking-wider disabled:opacity-50"
+                  title="Refresh Feedback"
+                >
+                  <span className="material-symbols-outlined text-[16px]">refresh</span>
+                  Refresh
+                </button>
+              </div>
             </div>
 
             {loadingFeedback ? (
@@ -857,8 +937,8 @@ export default function AdminView({
               <div className="text-center py-12 text-on-surface-variant font-light">
                 No feedback items found in the database.
               </div>
-            ) : (
-              <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/20">
+            ) : viewMode === "list" ? (
+              <div className="overflow-x-auto rounded-xl border border-white/5 bg-black/20 animate-in fade-in duration-200">
                 <table className="w-full text-left text-[14px] border-collapse">
                   <thead>
                     <tr className="bg-surface-container-low/50 text-[13px] font-bold text-on-surface-variant uppercase tracking-wider border-b border-white/5">
@@ -988,6 +1068,222 @@ export default function AdminView({
                     })}
                   </tbody>
                 </table>
+              </div>
+            ) : (
+              /* Kanban View */
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 w-full align-top animate-in fade-in duration-200">
+                {["Pending", "Under Review", "Planned", "Completed"].map((colName) => {
+                  const items = feedbackByStatus[colName] || [];
+                  const isDragOver = activeDragOverColumn === colName;
+
+                  // Status specific styling
+                  const borderColors: Record<string, string> = {
+                    "Pending": "border-neutral-500/20",
+                    "Under Review": "border-amber-500/20",
+                    "Planned": "border-blue-500/20",
+                    "Completed": "border-emerald-500/20",
+                  };
+
+                  const dotColors: Record<string, string> = {
+                    "Pending": "bg-neutral-500",
+                    "Under Review": "bg-amber-500",
+                    "Planned": "bg-blue-500",
+                    "Completed": "bg-emerald-500",
+                  };
+
+                  const bgColors: Record<string, string> = {
+                    "Pending": "bg-neutral-500/5",
+                    "Under Review": "bg-amber-500/5",
+                    "Planned": "bg-blue-500/5",
+                    "Completed": "bg-emerald-500/5",
+                  };
+
+                  return (
+                    <div
+                      key={colName}
+                      onDragOver={(e) => {
+                        e.preventDefault();
+                        if (activeDragOverColumn !== colName) {
+                          setActiveDragOverColumn(colName);
+                        }
+                      }}
+                      onDragLeave={() => {
+                        setActiveDragOverColumn(null);
+                      }}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        setActiveDragOverColumn(null);
+                        const feedbackId = e.dataTransfer.getData("text/plain");
+                        if (feedbackId) {
+                          handleUpdateFeedbackStatusDirectly(feedbackId, colName);
+                        }
+                      }}
+                      className={`flex flex-col rounded-2xl border bg-black/20 p-4 min-h-[500px] transition-all duration-200 ${isDragOver
+                          ? "border-primary/40 bg-primary/5 shadow-[0_0_15px_rgba(245,197,24,0.1)]"
+                          : `${borderColors[colName]} ${bgColors[colName]}`
+                        }`}
+                    >
+                      {/* Column Header */}
+                      <div className="flex items-center justify-between pb-3 border-b border-white/5 mb-4">
+                        <div className="flex items-center gap-2">
+                          <span className={`w-2 h-2 rounded-full ${dotColors[colName]}`} />
+                          <h4 className="font-display font-bold text-white text-[14px] uppercase tracking-wider">{colName}</h4>
+                        </div>
+                        <span className="px-2 py-0.5 rounded bg-white/5 text-[11px] text-neutral-400 font-mono">
+                          {items.length}
+                        </span>
+                      </div>
+
+                      {/* Column Content */}
+                      <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[600px] pr-1 custom-scrollbar">
+                        {items.length === 0 ? (
+                          <div className="flex-1 flex items-center justify-center border border-dashed border-white/5 rounded-xl p-8 text-center text-xs text-neutral-600 italic">
+                            Drop items here
+                          </div>
+                        ) : (
+                          items.map((item) => {
+                            const isEditing = editingFeedbackId === item.id;
+                            return (
+                              <div
+                                key={item.id}
+                                draggable={!isEditing}
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData("text/plain", item.id);
+                                }}
+                                className={`glass-panel p-4 rounded-xl space-y-3 border border-white/5 bg-surface-container-low/40 hover:bg-surface-container-low/80 transition-all ${isEditing
+                                    ? "ring-1 ring-primary/40 border-primary/20"
+                                    : "cursor-grab active:cursor-grabbing hover:border-white/10"
+                                  }`}
+                              >
+                                {/* Card Header */}
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="min-w-0">
+                                    <span className="font-mono text-[10px] text-neutral-500 block truncate" title={item.reviewerToken || "Community Feedback"}>
+                                      User: {item.reviewerToken ? item.reviewerToken.substring(0, 8) : "Community"}
+                                    </span>
+                                    <span className="text-[10px] text-neutral-600 font-sans block mt-0.5">
+                                      {new Date(item.createdAt).toLocaleDateString()}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {/* Card Body / Edit Form */}
+                                {isEditing ? (
+                                  <div className="space-y-3 pt-1">
+                                    <div>
+                                      <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Feedback Content</label>
+                                      <textarea
+                                        value={editFeedbackContent}
+                                        onChange={(e) => setEditFeedbackContent(e.target.value)}
+                                        className="w-full bg-surface-container-lowest border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary/40 transition-colors min-h-[60px]"
+                                        placeholder="Edit feedback content..."
+                                      />
+                                    </div>
+
+                                    <div>
+                                      <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Status</label>
+                                      <select
+                                        id={`kanban-status-select-${item.id}`}
+                                        defaultValue={item.status}
+                                        className="w-full bg-surface-container-lowest border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary/40 transition-colors cursor-pointer"
+                                      >
+                                        <option value="Pending">Pending</option>
+                                        <option value="Under Review">Under Review</option>
+                                        <option value="Planned">Planned</option>
+                                        <option value="Completed">Completed</option>
+                                      </select>
+                                    </div>
+
+                                    <div>
+                                      <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider block mb-1">Admin Comment</label>
+                                      <textarea
+                                        value={editAdminComment}
+                                        onChange={(e) => setEditAdminComment(e.target.value)}
+                                        className="w-full bg-surface-container-lowest border border-white/10 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-primary/40 transition-colors min-h-[60px]"
+                                        placeholder="Add comment/response..."
+                                      />
+                                    </div>
+
+                                    <div className="flex gap-2 justify-end pt-1">
+                                      <button
+                                        onClick={() => {
+                                          const selectEl = document.getElementById(`kanban-status-select-${item.id}`) as HTMLSelectElement;
+                                          handleSaveFeedback(item.id, selectEl?.value || item.status);
+                                        }}
+                                        disabled={savingFeedbackId === item.id}
+                                        className="px-2.5 py-1 bg-primary hover:bg-primary/80 text-black text-[10px] font-bold uppercase rounded transition-all cursor-pointer flex items-center gap-1"
+                                      >
+                                        <span className="material-symbols-outlined text-[12px]">save</span>
+                                        Save
+                                      </button>
+                                      <button
+                                        onClick={cancelEditingFeedback}
+                                        className="px-2.5 py-1 bg-white/5 hover:bg-white/10 text-white text-[10px] font-bold uppercase rounded transition-all cursor-pointer"
+                                      >
+                                        Cancel
+                                      </button>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <>
+                                    <p className="text-[13px] font-light leading-relaxed text-neutral-200 whitespace-pre-wrap font-sans break-words">
+                                      {item.content}
+                                    </p>
+
+                                    {item.adminComment && (
+                                      <div className="bg-primary/5 border border-primary/10 rounded-lg p-2.5 space-y-1">
+                                        <span className="text-[9px] font-bold text-primary uppercase tracking-wider block">Admin Response</span>
+                                        <p className="text-[11px] font-light leading-normal text-neutral-300 whitespace-pre-wrap font-sans break-words">
+                                          {item.adminComment}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {/* Card Footer Quick Actions */}
+                                    <div className="flex items-center justify-between border-t border-white/5 pt-2.5 mt-2 gap-2">
+                                      {/* Accessibility Selector Dropdown */}
+                                      <select
+                                        value={item.status}
+                                        onChange={(e) => handleUpdateFeedbackStatusDirectly(item.id, e.target.value)}
+                                        className="bg-transparent border border-white/10 rounded px-1.5 py-0.5 text-[10px] text-neutral-400 hover:text-white focus:outline-none transition-colors cursor-pointer"
+                                        title="Quick update status"
+                                      >
+                                        <option value="Pending">Pending</option>
+                                        <option value="Under Review">Under Review</option>
+                                        <option value="Planned">Planned</option>
+                                        <option value="Completed">Completed</option>
+                                      </select>
+
+                                      <div className="flex items-center gap-1">
+                                        <button
+                                          onClick={() => startEditingFeedback(item)}
+                                          className="p-1.5 bg-surface-container-low hover:bg-white/10 text-white rounded transition-colors"
+                                          title="Edit & Reply"
+                                        >
+                                          <span className="material-symbols-outlined text-[13px]">edit</span>
+                                        </button>
+                                        <button
+                                          onClick={() => handleDeleteFeedback(item.id)}
+                                          disabled={deletingFeedbackId === item.id}
+                                          className="p-1.5 bg-red-950/20 hover:bg-red-950/40 text-red-400 border border-red-900/30 hover:border-red-900/50 rounded transition-colors disabled:opacity-50"
+                                          title="Delete"
+                                        >
+                                          <span className="material-symbols-outlined text-[13px]">
+                                            {deletingFeedbackId === item.id ? "hourglass_empty" : "delete"}
+                                          </span>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                            );
+                          })
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>

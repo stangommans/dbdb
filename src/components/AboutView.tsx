@@ -61,8 +61,8 @@ export default function AboutView({
                 <span className="material-symbols-outlined text-amber-500/70 text-[22px]">sports_bar</span>
                 What is a Dive Bar?
               </h3>
-              <p className="text-on-surface-variant text-[16px] leading-relaxed font-light">
-                A <strong className="text-white font-semibold">dive bar</strong> is more than just a place to get a cheap drink—it's a sanctuary of authenticity. Characterized by dim lighting, cozy worn-in decor, pocket-friendly prices, and unpretentious crowds, these spots represent the heartbeat of local neighborhood culture. Whether it's a cash-only counter, a jukebox spinning old classics, or a pool table with history, dives are places where everyone is welcome.
+              <p className="text-on-surface-variant text-[16px] leading-relaxed font-light font-sans">
+                A <strong className="text-white font-semibold">dive bar</strong> is more than just a place to get a cheap drink—it&apos;s a sanctuary of authenticity. Characterized by dim lighting, cozy worn-in decor, pocket-friendly prices, and unpretentious crowds, these spots represent the heartbeat of local neighborhood culture. Whether it&apos;s a cash-only counter, a jukebox spinning old classics, or a pool table with history, dives are places where everyone is welcome.
               </p>
             </div>
 

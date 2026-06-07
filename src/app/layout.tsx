@@ -17,6 +17,10 @@ const outfit = Outfit({
 export const metadata: Metadata = {
   title: "DBDB — The Dive Bar Database",
   description: "Plot, search, and rate cozy local taprooms. Compare draft sizes, ml prices, and vibes in real-time.",
+  metadataBase: new URL("https://divebardb.com"),
+  alternates: {
+    canonical: "/",
+  },
   icons: {
     icon: 'data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🍺</text></svg>',
   },
