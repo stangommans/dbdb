@@ -2,6 +2,20 @@
 
 All notable changes to the Divebar Database (DBDB) project will be documented in this file.
 
+## [1.7.0] - 2026-06-07
+
+### Added
+- **Consolidated Nearby Discovery**:
+  - Integrated proximity/nearby sorting selection toggles directly into the core `ExploreView` header.
+  - Implemented an intuitive, beautiful contextual permission warning banner that prompts the user to share location only when "Nearby" sorting is selected without active GPS coordinates.
+  - Streamlined state mapping in `DashboardShell.tsx` to handle explore sorting preferences and GPS coordination.
+
+### Removed
+- **Decommissioned Route Cleanup**:
+  - Removed all automatic redirects from explore to nearby on mount.
+  - Deleted the deprecated separate `/nearby` route folder and pages.
+  - Trimmed the bottom navigation bar to exclude the now-redundant Nearby tab link and icons.
+
 ## [1.6.0] - 2026-06-07
 
 ### Added

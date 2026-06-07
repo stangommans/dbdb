@@ -48,9 +48,19 @@ interface MapProps {
   onBarSelect: (barId: string) => void;
   onMapClick?: (lat: number, lng: number) => void;
   newPinCoords?: { latitude: number; longitude: number } | null;
+  userCoords?: { latitude: number; longitude: number } | null;
+  onUserCoordsUpdate?: (coords: { latitude: number; longitude: number }) => void;
 }
 
-export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newPinCoords }: MapProps) {
+export default function Map({ 
+  bars, 
+  selectedBarId, 
+  onBarSelect, 
+  onMapClick, 
+  newPinCoords,
+  userCoords,
+  onUserCoordsUpdate
+}: MapProps) {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<L.Map | null>(null);
   const markersRef = useRef<{ [key: string]: L.Marker }>({});
@@ -108,6 +118,9 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
           }).addTo(map);
           userLocationMarkerRef.current = marker;
           setHasCenteredOnUser(true);
+
+          // Propagate back to parent
+          onUserCoordsUpdate?.({ latitude, longitude });
         },
         (error) => {
           console.warn("Could not retrieve user location on mount:", error);
@@ -125,7 +138,7 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
         userLocationMarkerRef.current = null;
       }
     };
-  }, []);
+  }, [onUserCoordsUpdate]);
 
   // Sync database bar pins
   useEffect(() => {
@@ -226,6 +239,28 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
     }
   }, [newPinCoords]);
 
+  // Sync parent user coordinates changes
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map) return;
+
+    if (userCoords) {
+      if (userLocationMarkerRef.current) {
+        userLocationMarkerRef.current.setLatLng([userCoords.latitude, userCoords.longitude]);
+      } else {
+        const marker = L.marker([userCoords.latitude, userCoords.longitude], {
+          icon: createUserLocationPin()
+        }).addTo(map);
+        userLocationMarkerRef.current = marker;
+      }
+
+      if (!hasCenteredOnUser) {
+        map.setView([userCoords.latitude, userCoords.longitude], 14, { animate: true });
+        setHasCenteredOnUser(true);
+      }
+    }
+  }, [userCoords, hasCenteredOnUser]);
+
   // Locate the user manually via the GPS button
   const handleLocate = () => {
     const map = mapRef.current;
@@ -246,6 +281,8 @@ export default function Map({ bars, selectedBarId, onBarSelect, onMapClick, newP
             userLocationMarkerRef.current = marker;
           }
           setHasCenteredOnUser(true);
+
+          onUserCoordsUpdate?.({ latitude, longitude });
         },
         (error) => {
           alert("Could not retrieve your location. Please check your browser permissions.");

@@ -70,7 +70,7 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
   const [bars, setBars] = useState<Bar[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState<'rating' | 'reviews' | 'name'>('rating');
+  const [sortBy, setSortBy] = useState<'rating' | 'reviews' | 'nearby' | 'name'>('rating');
 
   // Multi-tab Layout states derived from URL pathname
   const activeTab: Tab = (() => {
@@ -94,10 +94,46 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
 
   // Map coordination states
   const [newPinCoords, setNewPinCoords] = useState<{ latitude: number; longitude: number } | null>(null);
+  const [userCoords, setUserCoords] = useState<{ latitude: number; longitude: number } | null>(null);
   const [userUuid, setUserUuid] = useState<string | null>(null);
   const [activePhotoUrl, setActivePhotoUrl] = useState<string | null>(null); // Image lightbox controller
   const [adminPasscode, setAdminPasscode] = useState<string | null>(null);
   const [activeCurrency, setActiveCurrency] = useState<string>('EUR');
+
+  // Distance helper using Haversine formula
+  const calculateDistance = useCallback((lat1: number, lon1: number, lat2: number, lon2: number) => {
+    const R = 6371; // Earth's radius in km
+    const dLat = (lat2 - lat1) * Math.PI / 180;
+    const dLon = (lon2 - lon1) * Math.PI / 180;
+    const a =
+      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+      Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+      Math.sin(dLon / 2) * Math.sin(dLon / 2);
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+    return R * c; // Distance in km
+  }, []);
+
+  // Request user location manually
+  const requestLocation = useCallback(() => {
+    if (typeof window !== 'undefined' && navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserCoords({
+            latitude: position.coords.latitude,
+            longitude: position.coords.longitude
+          });
+          setSortBy('nearby');
+        },
+        (error) => {
+          console.warn("Could not retrieve user location:", error);
+          alert("Could not retrieve your location. Please check your browser location permissions.");
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 60000 }
+      );
+    } else {
+      alert("Geolocation is not supported by your browser.");
+    }
+  }, []);
 
   // Initial resource load
   const fetchData = useCallback(async () => {
@@ -145,11 +181,28 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
         if (currencyStored) {
           setActiveCurrency(currencyStored);
         }
+
+        // Silent location detection on mount
+        if (navigator.geolocation) {
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const coords = {
+                latitude: position.coords.latitude,
+                longitude: position.coords.longitude
+              };
+              setUserCoords(coords);
+            },
+            (error) => {
+              console.log("Silent location check declined or unavailable:", error.message);
+            },
+            { enableHighAccuracy: false, timeout: 3000, maximumAge: 300000 }
+          );
+        }
       }
     };
 
     initializeDashboard();
-  }, [fetchData]);
+  }, [fetchData, pathname, router]);
 
   // Map tap handler to launch manual coordinate capture drawer
   const handleMapClick = useCallback((lat: number, lng: number) => {
@@ -342,6 +395,11 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
       if (sortBy === 'reviews') {
         return b.reviewCount - a.reviewCount;
       }
+      if (sortBy === 'nearby' && userCoords) {
+        const distA = calculateDistance(userCoords.latitude, userCoords.longitude, a.latitude, a.longitude);
+        const distB = calculateDistance(userCoords.latitude, userCoords.longitude, b.latitude, b.longitude);
+        return distA - distB;
+      }
       return a.name.localeCompare(b.name);
     });
 
@@ -517,21 +575,31 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
                   Sort by
                 </span>
                 <div className="flex bg-surface-container-lowest border border-white/5 rounded-xl p-1 gap-1">
-                  {([
-                    { key: 'rating', label: 'Score' },
-                    { key: 'reviews', label: 'Reviews' }
-                  ] as const).map((item) => (
-                    <button
-                      key={item.key}
-                      onClick={() => setSortBy(item.key)}
-                      className={`px-4 py-2.5 rounded-xl font-display text-[18px] font-bold tracking-wider uppercase transition-all cursor-pointer min-h-[48px]
-                        ${sortBy === item.key
-                          ? 'bg-primary-container text-on-primary-container shadow-md shadow-amber-500/10'
-                          : 'text-on-surface-variant hover:text-white'}`}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
+                  {(() => {
+                    const options = [
+                      { key: 'rating', label: 'Score' },
+                      { key: 'reviews', label: 'Reviews' },
+                      { key: 'nearby', label: 'Nearby' }
+                    ] as const;
+                    return options.map((item) => (
+                      <button
+                        key={item.key}
+                        onClick={() => {
+                          if (item.key === 'nearby' && !userCoords) {
+                            requestLocation();
+                          } else {
+                            setSortBy(item.key);
+                          }
+                        }}
+                        className={`px-4 py-2.5 rounded-xl font-display text-[18px] font-bold tracking-wider uppercase transition-all cursor-pointer min-h-[48px]
+                          ${sortBy === item.key
+                            ? 'bg-primary-container text-on-primary-container shadow-md shadow-amber-500/10'
+                            : 'text-on-surface-variant hover:text-white'}`}
+                      >
+                        {item.label}
+                      </button>
+                    ));
+                  })()}
                 </div>
               </div>
             </div>
@@ -557,6 +625,15 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               ) : (
                 filteredAndSortedBars.map((bar) => {
                   const active = bar.id === selectedBarId;
+                  const distance = userCoords
+                    ? calculateDistance(userCoords.latitude, userCoords.longitude, bar.latitude, bar.longitude)
+                    : null;
+                  const distanceText = distance !== null
+                    ? distance < 1
+                      ? `${Math.round(distance * 1000)}m away`
+                      : `${distance.toFixed(1)} km away`
+                    : null;
+
                   return (
                     <div
                       key={bar.id}
@@ -580,8 +657,14 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
                       </div>
                       <p className="text-[18px] text-on-surface-variant font-normal mt-2 line-clamp-1">{bar.address}</p>
 
-                      <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/5 text-[18px] font-bold text-on-surface-variant tracking-wider uppercase">
+                      <div className="flex items-center justify-between gap-3 mt-4 pt-4 border-t border-white/5 text-[18px] font-bold text-on-surface-variant tracking-wider uppercase">
                         <span>{bar.reviewCount} Review{bar.reviewCount === 1 ? '' : 's'}</span>
+                        {distanceText && (
+                          <span className="text-primary font-bold lowercase tracking-normal flex items-center gap-1">
+                            <span className="material-symbols-outlined text-[16px]">navigation</span>
+                            {distanceText}
+                          </span>
+                        )}
                       </div>
                     </div>
                   );
@@ -601,6 +684,10 @@ export default function DashboardShell({ children }: { children?: React.ReactNod
               }}
               selectedBarId={selectedBarId}
               activeCurrency={activeCurrency}
+              userCoords={userCoords}
+              sortBy={sortBy}
+              onSortByChange={setSortBy}
+              onRequestLocation={requestLocation}
             />
           </div>
         )}

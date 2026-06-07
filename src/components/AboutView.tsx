@@ -72,10 +72,19 @@ export default function AboutView({
                 <span className="material-symbols-outlined text-amber-500/70 text-[22px]">info</span>
                 About DBDB
               </h3>
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[11px]">Author</span>
                   <span className="text-white font-semibold text-[15px]">stan.gommans</span>
+                </div>
+                <div>
+                  <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[11px]">Contact</span>
+                  <a
+                    href="mailto:info@divebardb.com"
+                    className="inline-flex items-center gap-1 text-primary hover:text-white font-bold transition-colors mt-0.5 text-[14px] group"
+                  >
+                    <span className="underline decoration-dashed decoration-primary/50 group-hover:decoration-white transition-all">info@divebardb.com</span>
+                  </a>
                 </div>
                 <div>
                   <span className="text-on-surface-variant block font-bold uppercase tracking-wider text-[11px]">Version</span>
